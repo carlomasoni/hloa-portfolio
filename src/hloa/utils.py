@@ -9,13 +9,15 @@ Utility functions to support HLOA, including:
 - Numerical stability utilities
 """
 
-
 from __future__ import annotations
+
 import numpy as np
+
 
 def rng(seed: int | None = None) -> np.random.Generator:
     """Return a NumPy Generator with an optional seed."""
     return np.random.default_rng(seed)
+
 
 def random_simplex(rng: np.random.Generator, n: int, size: int = 1):
     """Draw weights on the probability simplex."""

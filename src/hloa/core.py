@@ -11,18 +11,22 @@ Contains the main optimizer class `HornedLizardOptimizer` with:
 """
 
 from __future__ import annotations
-from typing import Protocol, Callable
+
+from typing import Protocol
+
 import numpy as np
-from .utils import random_simplex, rng as make_rng
+
+from .utils import random_simplex
+from .utils import rng as make_rng
+
 
 class Objective(Protocol):
     def __call__(self, w: np.ndarray) -> float: ...
 
-def optimize(objective: Objective, n_assets: int, iters: int = 2000, seed: int | None = None) -> np.ndarray:
-    """
-    Very simple baseline optimiser: random search on the simplex maximizing the objective.
-    Replace with HLOA proper later.
-    """
+
+def optimize(
+    objective: Objective, n_assets: int, iters: int = 2000, seed: int | None = None
+) -> np.ndarray:
     g = make_rng(seed)
     best_w = random_simplex(g, n_assets)
     best_val = float(objective(best_w))
@@ -31,4 +35,6 @@ def optimize(objective: Objective, n_assets: int, iters: int = 2000, seed: int |
         v = float(objective(w))
         if v > best_val:
             best_w, best_val = w, v
-    return best_w
+    return best_w, best_val
+
+    

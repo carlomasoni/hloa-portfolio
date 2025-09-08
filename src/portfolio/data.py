@@ -9,10 +9,10 @@ Functions for handling market data:
 - Annualisation of mean and covariance
 """
 
-
-
 from __future__ import annotations
+
 import pandas as pd
+
 
 def load_returns(path: str, freq: str = "D") -> pd.DataFrame:
     """

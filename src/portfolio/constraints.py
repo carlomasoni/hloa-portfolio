@@ -8,10 +8,10 @@ Constraint handling and projections:
 - Composable projectors for long-only, long-short, leverage caps
 """
 
-
-
 from __future__ import annotations
+
 import numpy as np
+
 
 def project_simplex(w: np.ndarray) -> np.ndarray:
     """Project onto simplex: w >= 0, sum w = 1."""
@@ -19,8 +19,10 @@ def project_simplex(w: np.ndarray) -> np.ndarray:
     s = w.sum()
     return w / s if s > 0 else np.ones_like(w) / w.size
 
+
 def clip_box(w: np.ndarray, low: float = 0.0, high: float = 1.0) -> np.ndarray:
     return np.clip(np.asarray(w, dtype=float), low, high)
+
 
 def turnover(prev: np.ndarray, new: np.ndarray) -> float:
     prev = np.asarray(prev, dtype=float)
