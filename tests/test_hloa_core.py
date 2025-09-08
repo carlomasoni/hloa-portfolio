@@ -20,3 +20,16 @@ def test_optimize_returns_simplex_weights():
     w = optimize(obj, n_assets=n, iters=200, seed=42)
     assert np.isclose(w.sum(), 1.0)
     assert (w >= 0).all()
+
+
+from hloa.core import HornedLizardOptimizer
+
+
+def test_optimizer_init():
+    opt = HornedLizardOptimizer(pop_size=10, iters=5, seed=42)
+    assert opt.pop_size == 10
+    assert opt.iters == 5
+    assert opt.seed == 42
+    
+
+
