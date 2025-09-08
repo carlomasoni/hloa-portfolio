@@ -1,3 +1,15 @@
+"""
+constraints.py
+
+Constraint handling and projections:
+
+- Simplex projection (long-only, sum of weights = 1)
+- Box constraints (w_min ≤ w ≤ w_max) with renormalization
+- Composable projectors for long-only, long-short, leverage caps
+"""
+
+
+
 from __future__ import annotations
 import numpy as np
 

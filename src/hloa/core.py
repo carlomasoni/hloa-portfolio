@@ -1,3 +1,15 @@
+"""
+core.py
+
+Implements the Horned Lizard Optimisation Algorithm (HLOA).
+Contains the main optimizer class `HornedLizardOptimizer` with:
+
+- Population initialization
+- Leader/elite selection
+- Position update rules from the paper
+- Stopping criteria and history tracking
+"""
+
 from __future__ import annotations
 from typing import Protocol, Callable
 import numpy as np

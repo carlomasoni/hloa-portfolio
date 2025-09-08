@@ -1,3 +1,15 @@
+"""
+frontier.py
+
+Efficient frontier construction and wrappers:
+
+- Build portfolios across lambda/target-return grids
+- Compute risk, return, Sharpe for each solution
+- Identify and return max-Sharpe portfolio
+"""
+
+
+
 from __future__ import annotations
 import numpy as np
 import pandas as pd

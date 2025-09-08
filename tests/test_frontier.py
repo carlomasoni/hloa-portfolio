@@ -1,3 +1,15 @@
+"""
+Unit tests for portfolio/frontier.py
+
+Ensures frontier construction is correct:
+- Solutions ordered by risk
+- Max-Sharpe matches direct optimization
+- Results comparable to convex baselines on small universes
+"""
+
+
+
+
 import numpy as np
 import pandas as pd
 from portfolio.frontier import max_sharpe, sample_frontier

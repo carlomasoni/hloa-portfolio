@@ -1,3 +1,15 @@
+"""
+objectives.py
+
+Objective functions for optimization:
+
+- Negative Sharpe ratio (for maximizers → minimizer form)
+- Mean–variance trade-off with penalty parameter
+- Penalty wrappers for turnover, leverage, or constraint violations
+"""
+
+
+
 from __future__ import annotations
 import numpy as np
 import pandas as pd

@@ -1,3 +1,15 @@
+"""
+Unit tests for portfolio/objectives.py
+
+Validates objective calculations:
+- Negative Sharpe ratio
+- Mean–variance penalty form
+- Stability (no NaNs/inf on small variances)
+"""
+
+
+
+
 import numpy as np
 import pandas as pd
 from portfolio.objectives import sharpe_ratio, mean_variance

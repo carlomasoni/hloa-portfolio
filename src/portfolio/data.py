@@ -1,3 +1,16 @@
+"""
+data.py
+
+Functions for handling market data:
+
+- Load price data from CSVs or DataFrames
+- Convert to log or simple returns
+- Frequency conversion (daily, weekly, monthly)
+- Annualisation of mean and covariance
+"""
+
+
+
 from __future__ import annotations
 import pandas as pd
 

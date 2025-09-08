@@ -1,3 +1,15 @@
+"""
+Unit tests for portfolio/constraints.py
+
+Checks correctness of simplex and box projections:
+- Weights sum to 1
+- All weights ≥ 0 (if long-only)
+- Closest feasible point under L2 norm
+"""
+
+
+
+
 import numpy as np
 from portfolio.constraints import project_simplex, clip_box, turnover
 

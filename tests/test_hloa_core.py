@@ -1,3 +1,15 @@
+"""
+Unit tests for hloa/core.py
+
+Covers initialization, seed reproducibility, 
+and convergence behaviour of HornedLizardOptimizer.
+"""
+
+
+
+
+
+
 import numpy as np
 from hloa.core import optimize
 
