@@ -5,7 +5,6 @@ Covers initialization, seed reproducibility,
 and convergence behaviour of HornedLizardOptimizer.
 """
 
-import pytest
 from hloa import HornedLizardOptimizer
 
 
