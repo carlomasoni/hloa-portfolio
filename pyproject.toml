@@ -16,6 +16,9 @@ dependencies = [
   "scikit-learn",
   "cvxpy",
   "pyyaml",
+  "ecos",   
+  "osqp",   
+  "scs",
 ]
 
 [project.optional-dependencies]
