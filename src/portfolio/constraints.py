@@ -14,7 +14,6 @@ import numpy as np
 
 
 def project_simplex(w: np.ndarray) -> np.ndarray:
-    """Project onto simplex: w >= 0, sum w = 1."""
     w = np.maximum(np.asarray(w, dtype=float), 0.0)
     s = w.sum()
     return w / s if s > 0 else np.ones_like(w) / w.size

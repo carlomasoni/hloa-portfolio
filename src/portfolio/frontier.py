@@ -17,7 +17,6 @@ import pandas as pd
 def max_sharpe(
     mu: pd.Series, cov: pd.DataFrame, n_trials: int = 20000, seed: int | None = None
 ) -> np.ndarray:
-    """Brute-force max-Sharpe by random sampling on the simplex."""
     g = np.random.default_rng(seed)
     n = len(mu)
     best_w = np.zeros(n)
@@ -37,7 +36,6 @@ def max_sharpe(
 def sample_frontier(
     mu: pd.Series, cov: pd.DataFrame, n: int = 100, seed: int | None = None
 ):
-    """Return (weights, returns, vols) sampled on the simplex."""
     g = np.random.default_rng(seed)
     W, R, V = [], [], []
     for _ in range(n):

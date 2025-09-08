@@ -13,8 +13,10 @@ class HornedLizardOptimizer:
         self.seed = seed
 
     def minimize(self, func, bounds, constraints=None, callback=None):
-        """Placeholder until the algorithm is implemented."""
-        raise NotImplementedError("HLOA minimize() not yet implemented.")
+        raise NotImplementedError()
+
+
+
 
 
 

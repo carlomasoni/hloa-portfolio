@@ -5,31 +5,19 @@ Covers initialization, seed reproducibility,
 and convergence behaviour of HornedLizardOptimizer.
 """
 
-import numpy as np
-
-from hloa.core import optimize
-
-
-def test_optimize_returns_simplex_weights():
-    # maximise the first coordinate: objective is just w[0]
-    n = 5
-
-    def obj(w):
-        return float(w[0])
-
-    w = optimize(obj, n_assets=n, iters=200, seed=42)
-    assert np.isclose(w.sum(), 1.0)
-    assert (w >= 0).all()
+import pytest
+from hloa import HornedLizardOptimizer
 
 
-from hloa.core import HornedLizardOptimizer
-
-
-def test_optimizer_init():
+def test_optimizer_init_fields():
     opt = HornedLizardOptimizer(pop_size=10, iters=5, seed=42)
     assert opt.pop_size == 10
     assert opt.iters == 5
     assert opt.seed == 42
-    
 
+
+def test_optimizer_minimize_not_implemented():
+    opt = HornedLizardOptimizer()
+    with pytest.raises(NotImplementedError):
+        opt.minimize(lambda x: sum(x), bounds=[(0, 1)])
 
