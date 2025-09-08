@@ -7,9 +7,9 @@ PACKAGES_TO_CHECK = [
     "scipy",
     "pandas",
     "matplotlib",
-    "sklearn",  # scikit-learn import name
+    "sklearn",  
     "cvxpy",
-    "yaml",  # PyYAML import name
+    "yaml",  
     "ecos",
     "osqp",
     "scs",
@@ -24,7 +24,7 @@ def main() -> int:
             module = importlib.import_module(package_name)
             version = getattr(module, "__version__", "n/a")
             print(f"{package_name}: {version}")
-        except Exception as exc:  # noqa: BLE001 - simple reporting script
+        except Exception as exc:  
             all_ok = False
             print(f"{package_name}: ERROR {exc}")
     return 0 if all_ok else 1
