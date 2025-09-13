@@ -1,2 +1,2 @@
-from .core import HLOA
-__all__ = ["HLOA"]
+from .core import HLOA, HLOA_Config
+__all__ = ["HLOA", "HLOA_Config"]

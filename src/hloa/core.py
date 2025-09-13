@@ -35,6 +35,9 @@ class HLOA:
         self.constraint_type = constraint_type
         self.cfg = config
         self.rng = np.random.default_rng(config.seed)
+    
+    def minimize(self):
+        raise NotImplementedError("HLOA minimize method not yet implemented")
 
 
 
