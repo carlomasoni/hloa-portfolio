@@ -10,7 +10,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import Callable, Tuple, Optional
 
-# cleanup
+#cleanup
 #from portfolio.constraints import project_simplex, clip_box, turnover
 from hloa.ops import crypsis, sigma, skin_darken, skin_lighten, blood_squirt, alpha_msh, move_to_escape
 
