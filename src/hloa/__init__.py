@@ -1,3 +1,3 @@
-from .core import HornedLizardOptimizer
+from .core import HLOA
 
-__all__ = ["HornedLizardOptimizer"]
+__all__ = ["HLOA"]

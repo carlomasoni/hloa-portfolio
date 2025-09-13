@@ -27,3 +27,5 @@ def turnover(prev: np.ndarray, new: np.ndarray) -> float:
     prev = np.asarray(prev, dtype=float)
     new = np.asarray(new, dtype=float)
     return float(np.abs(prev - new).sum() / 2.0)
+
+

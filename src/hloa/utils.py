@@ -20,6 +20,8 @@ def rng(seed: int | None = None) -> np.random.Generator:
     return np.random.default_rng(seed)
 
 
+
+
 def random_simplex(rng: np.random.Generator, n: int, size: int = 1):
     if size == 1:
         x = rng.random(n)
