@@ -1,8 +1,8 @@
 """
-Unit tests for hloa/core.py
-
 Covers initialization, seed reproducibility,
 and convergence behaviour of HornedLizardOptimizer.
+
+if these fail ggs icl
 """
 import pytest
 

@@ -1,17 +1,14 @@
 """
-data.py
-
-Functions for handling market data:
-
-- Load price data from CSVs or DataFrames
-- Convert to log or simple returns
+- Load price data from CSVs or DataFrames (ask ajit where to get the right market data or if he wants to run it himself idrk rn)
+- Convert to log or simple returns 
 - Frequency conversion (daily, weekly, monthly)
 - Annualisation of mean and covariance
 """
-
 from __future__ import annotations
-
 import pandas as pd
+
+
+
 
 
 def load_returns(path: str, freq: str = "D") -> pd.DataFrame:

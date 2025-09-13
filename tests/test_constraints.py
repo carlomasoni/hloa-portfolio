@@ -1,6 +1,4 @@
 """
-Unit tests for portfolio/constraints.py
-
 Checks correctness of simplex and box projections:
 - Weights sum to 1
 - All weights ≥ 0 (if long-only)

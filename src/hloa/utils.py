@@ -1,12 +1,11 @@
 """
-utils.py
-
-Utility functions to support HLOA, including:
-
 - RNG seeding and reproducibility
-- Population initialisation helpers
+- Pop. initialisation helpers
 - Projection shortcuts (simple clamps, random init)
 - Numerical stability utilities
+
+WIP -> add after operands are done ]
+
 """
 
 from __future__ import annotations

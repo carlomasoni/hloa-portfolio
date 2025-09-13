@@ -1,7 +1,4 @@
 """
-constraints.py
-
-Constraint handling and projections:
 
 - Simplex projection (long-only, sum of weights = 1)
 - Box constraints (w_min ≤ w ≤ w_max) with renormalization

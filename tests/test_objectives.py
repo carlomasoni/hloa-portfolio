@@ -1,6 +1,4 @@
 """
-Unit tests for portfolio/objectives.py
-
 Validates objective calculations:
 - Negative Sharpe ratio
 - Mean–variance penalty form
