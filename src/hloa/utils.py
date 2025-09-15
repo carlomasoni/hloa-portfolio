@@ -4,7 +4,7 @@
 - Projection shortcuts (simple clamps, random init)
 - Numerical stability utilities
 
-WIP -> add after operands are done ]
+WIP -> add after operands are done 
 
 """
 

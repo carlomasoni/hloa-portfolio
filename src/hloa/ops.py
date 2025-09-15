@@ -10,9 +10,13 @@ colorVar = b_p - a_p +- (a_r = b_s )
 
 - then map color operations onto search agents X_i (t + 1). from current X_best with random agents + sigma from above 
 
+SKIN LIGHTENING/DARKENING ]
+- pick 4 peers
+- sample pallette values, update only worst agent with either eq9 or eq 10
 """
 from typing import Generator
-import numpy as np 
+import numpy as np
+from numpy.random import PCG64 
 from portfolio.constraints import apply_bounds
 
 def sigma(rng: np.random.Generator) -> int: 
@@ -40,14 +44,14 @@ def crypsis(
     r_idx = np.empty((n, 4), dtype=int)
     all_idx = np.arange(n)
     for i in range(n):
-        replace = n < 4
-        r_idx[i] = rng.choice(all_idx, size=4, replace=replace)
-    
-    #make sure r1 doesnt equal r2 etc 
+        if n >= 4:
+            r_idx[i] = rng.permutation(all_idx)[:4]
+        else:
+            r_idx[i] = rng.choice(all_idx, size=4, replace=True)
 
     r1, r2, r3, r4 = r_idx.T
 
-    # COLOR_VAR from paper. 
+
     map1 = c1 * (np.sin(X[r1]) - np.cos(X[r2]))
     map2 = c2 * (np.cos(X[r3]) - np.sin(X[r4]))
 
@@ -56,8 +60,6 @@ def crypsis(
 
     amplitude_decay = omega * ((1 - (t + 1) / max_iter) + (decay_eps / max_iter))
 
-    # CHOOSE THE BEST LIZARD
-
     X_next = X_best[None, :] + amplitude_decay * (map1 + new_map2)
 
     X_next = apply_bounds(X_next, bounds)
@@ -65,8 +67,71 @@ def crypsis(
     return X_next
 
 
+def skin_lighten(
+    X: np.ndarray,
+    X_best: np.ndarray,
+    idx_worst: int,
+    rng: Generator | None = None, 
+    sigma_func = sigma,
+) -> np.ndarray:
 
-def skin_lighten():
+    if rng is None:
+        rng = np.random.Generator(np.random.PCG64())
+
+    n, d = X.shape
+    r_idx = np.empty((n, 4), dtype=int)
+    all_idx = np.arange(n)
+    for i in range(n):
+        if n >= 4:
+            r_idx[i] = rng.permutation(all_idx)[:4]
+        else:
+            r_idx[i] = rng.choice(all_idx, size=4, replace=True)
+
+    r1, r2, r3, r4 = r_idx.T
+
+
+    light_values = [0.0, 0.404661]
+    dark_values  = [0.544510, 1.0]
+
+    l1,l2 = rng.choice(light_values, size = 2)
+    d1,d2 = rng.choice(dark_values, size = 2)
+
+    s = sigma_func(rng)
+
+    l_agent = (
+        X_best + ( 0.5 * l1 *(np.sin(X[r1]) - X[r2]) ) - (  ((-1.0) ** s) * (0.5  * l2 * np.sin(X[r3]) - X[r4]))
+    
+    )
+    
+    d_agent = (
+        X_best + ( 0.5 * d1 *(np.sin(X[r1]) - X[r2]) ) - (  ((-1.0) ** s) * (0.5  * d2 * np.sin(X[r3]) - X[r4]))
+    )
+
+    if rng.random() < 0.5:
+        new_agent = l_agent
+    else:
+        new_agent = d_agent
+
+    X_new  = X.copy()
+    X_new[idx_worst] = new_agent
+    return X_new
+
+
+
+    
+
+
+    
+
+
+    
+
+
+
+
+
+
+    
     return
 
 def skin_darken():
