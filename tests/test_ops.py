@@ -60,7 +60,7 @@ def test_crypsis_with_custom_parameters():
     
     result = crypsis(
         X, X_best, t, max_iter,
-        c1=2.0, c2=1.5, omega=3.0, decay_eps=0.2
+        c1=2.0, c2=1.5, delta=3.0, decay_eps=0.2
     )
     
     assert result.shape == (n, d)
