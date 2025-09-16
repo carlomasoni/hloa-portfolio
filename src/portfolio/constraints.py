@@ -78,3 +78,30 @@ def apply_bounds(X_next: np.ndarray, bounds: Union[Tuple[np.ndarray, np.ndarray]
     return X_next
 
 
+def project_capped_simplex(w: np.ndarray, total: float = 1.0, cap: float = 0.05) -> np.ndarray:
+    w = np.asarray(w, dtype=float)
+    w = np.clip(w, 0.0, cap)
+    n = w.size
+    if np.isclose(w.sum(), total):
+        return w
+    # Use sorting-based projection onto {0 <= x <= cap, sum x = total}
+    # Adapted from Duchi et al. with upper bounds
+    u = np.sort(w)[::-1]
+    cssv = np.cumsum(u)
+    rho = -1
+    theta = 0.0
+    for j in range(n):
+        theta = (cssv[j] - total) / (j + 1)
+        if u[j] - theta > 0:
+            rho = j
+    theta = (cssv[rho] - total) / (rho + 1) if rho >= 0 else 0.0
+    x = np.clip(w - theta, 0.0, cap)
+    # Correct small numerical drift
+    s = x.sum()
+    if not np.isclose(s, total):
+        if s > 0:
+            x *= total / s
+            x = np.clip(x, 0.0, cap)
+    return x
+
+
