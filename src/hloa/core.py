@@ -1,16 +1,13 @@
-"""
-core.py
-
-Implements the Horned Lizard Optimisation Algorithm (HLOA).
-Contains the main optimizer class `HornedLizardOptimizer`.
-"""
-
-# libs
 import numpy as np
 from numpy.random import Generator, PCG64
 from typing import Tuple, Callable
 from hloa.ops import crypsis, sigma, skin_lord, blood_squirt, move_to_escape, alpha_msh
 from portfolio.constraints import apply_bounds
+
+
+
+
+
 
 
 
@@ -29,7 +26,6 @@ class HLOA_Config:
         self.seed = seed
         self.p_mimic = p_mimic
         self.p_flee = p_flee
-
 
 
 class HLOA:

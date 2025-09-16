@@ -1,31 +1,19 @@
-"""
-Seperated individual operators for the main algorithm for simplicity
-Implement each one from the paper
-CRYPSIS
-- frame colour coordinates into CIE space -> rect (a,b)and polar (c,h) (check the gaussian integral project from last year for ez conversion if its still there)
-                                    c = sq. (a^2 + b^2), h = arctan(b/a) 
-                                    [inv] a = c cos h, b = c sin h
-- form colour variable from p,q,r,s 
-colorVar = b_p - a_p +- (a_r = b_s ) 
-
-- then map color operations onto search agents X_i (t + 1). from current X_best with random agents + sigma from above 
-
-SKIN LIGHTENING/DARKENING ]
-- pick 4 peers
-- sample pallette values, update only worst agent with either eq9 or eq 10
-
-
-
-BOUNDS??????????
-
-
-"""
 from typing import Generator
 import numpy as np
 from portfolio.constraints import apply_bounds
 
+
+
+
+
+
+
+
+
+
 def sigma(rng: np.random.Generator) -> int: 
     return int(rng.random() > 0.5)
+
 
 def crypsis(
     X: np.ndarray,
@@ -39,7 +27,7 @@ def crypsis(
     delta: float = 2.0,
     decay_eps: float = 0.1,
     sigma_func = sigma,
-) -> np.ndarray:
+    ) -> np.ndarray:
 
     if rng is None:
         rng = np.random.Generator(np.random.PCG64())
@@ -80,7 +68,7 @@ def skin_lord(
     rng: Generator | None = None, 
     sigma_func = sigma,
     bounds: tuple | None = None, 
-) -> np.ndarray:
+    ) -> np.ndarray:
 
     if rng is None:
         rng = np.random.Generator(np.random.PCG64())
@@ -118,8 +106,6 @@ def skin_lord(
     return X_new
 
 
-
-
 def blood_squirt(
     X: np.ndarray,
     X_best: np.ndarray,
@@ -130,7 +116,7 @@ def blood_squirt(
     g: float = 9.807e-3,
     epsilon: float = 1e-6,
     bounds: tuple | None = None,
-) -> np.ndarray:
+    ) -> np.ndarray:
 
     a = v0 * np.cos( alpha * (t / max_iter)) + epsilon 
     b = v0 * np.sin(alpha - (t / max_iter)) - g + epsilon
@@ -140,13 +126,14 @@ def blood_squirt(
 
     return X_next
 
+
 def move_to_escape(
     X: np.ndarray,
     X_best: np.ndarray,
     rng: Generator,
     bounds: tuple | None = None,
     clip: float | None = 10.0,
-) -> np.ndarray:
+    ) -> np.ndarray:
 
     n,d = X.shape
 
@@ -159,6 +146,7 @@ def move_to_escape(
     X_next = X_best[None, :] + walk * ((0.5 - epsilon) * X)      
 
     return X_next
+
 
 def alpha_msh(
     X: np.ndarray,
