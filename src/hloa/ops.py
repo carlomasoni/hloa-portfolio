@@ -22,7 +22,6 @@ BOUNDS??????????
 """
 from typing import Generator
 import numpy as np
-from numpy.random import PCG64, f 
 from portfolio.constraints import apply_bounds
 
 def sigma(rng: np.random.Generator) -> int: 
@@ -68,6 +67,8 @@ def crypsis(
 
     X_next = X_best[None, :] + amplitude_decay * (map1 + new_map2)
 
+    if bounds is not None:
+        X_next = apply_bounds(X_next, bounds)
 
     return X_next
 
@@ -124,23 +125,6 @@ def skin_lord(
 
     return X_new
 
-
-
-    
-
-
-    
-
-
-    
-
-
-
-
-
-
-    
-    return
 
 
 
@@ -207,27 +191,29 @@ def alpha_msh(
         msh = ( f_max - fitness) / (f_max - f_min)
 
     reset_condition = msh < threshold
-    if not  np.any(reset_condition):
+    if not np.any(reset_condition):
         return X, msh, reset_condition
 
-    idx_best = int(np.argm9n(fitness))
-    X_best = X[idx_best]  
+    idx_best = int(np.argmin(fitness))
+    X_best = X[idx_best]
 
     m = int(np.sum(reset_condition))
-    r1 = rng.integers(0, n, size =m,)   
-    r2 = rng.integers(0, n -1, size =m)
-    r2 +=m( r2 >= r1)
+    r1 = rng.integers(0, n, size=m)
+    r2 = rng.integers(0, n - 1, size=m)
+    r2 = r2 + (r2 >= r1)  
 
     s = np.fromiter((sigma_func(rng) for _ in range(m)), dtype=int)
 
-    X_new = X.copy()
-    new = (
-        X_best[None, :] + 0.54 (* (x[r1]) - ((1.0) **s)[:, None] * X[r2])
-    )
+    # Mix towards best with exploration using two peers
+    new = X_best[None, :] + 0.5 * (X[r1] - ((-1.0) ** s)[:, None] * X[r2])
 
+    X_new = X.copy()
     X_new[reset_condition] = new
+
+    if bounds is not None:
+        X_new = apply_bounds(X_new, bounds)
     
-    return X_new, msh, new
+    return X_new, msh, reset_condition
 
 
 
