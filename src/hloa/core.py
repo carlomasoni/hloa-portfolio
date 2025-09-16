@@ -19,13 +19,14 @@ class HLOA_Config:
         seed: int | None = 42,
         p_mimic: float = 0.6,
         p_flee: float = 0.2, 
-        alpha_msh_threshold=0.3,  
+        alpha_msh_threshold: float = 0.3,  
     ):
         self.pop_size = pop_size
         self.iters = iters
         self.seed = seed
         self.p_mimic = p_mimic
         self.p_flee = p_flee
+        self.alpha_msh_threshold = alpha_msh_threshold
 
 
 class HLOA:
@@ -102,25 +103,5 @@ class HLOA:
 
         return w_best, f_best, X, f
 
-
-
-
-
-
-            
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def minimize(self):
+        raise NotImplementedError

@@ -103,5 +103,3 @@ def project_capped_simplex(w: np.ndarray, total: float = 1.0, cap: float = 0.05)
             x *= total / s
             x = np.clip(x, 0.0, cap)
     return x
-
-

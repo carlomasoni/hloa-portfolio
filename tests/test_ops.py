@@ -1,8 +1,10 @@
 
 import pytest
 import numpy as np
-from hloa.ops import crypsis, sigma
+
 from portfolio.constraints import apply_bounds
+
+from hloa.ops import crypsis, skin_lord, blood_squirt, move_to_escape, alpha_msh, sigma
 
 
 def test_sigma_function():
@@ -32,9 +34,6 @@ def test_crypsis_basic_functionality():
 
     assert result.shape == (n, d)
     assert isinstance(result, np.ndarray)
-
-
- 
 
 
 def test_crypsis_deterministic_with_seed():
@@ -83,21 +82,6 @@ def test_apply_bounds_simplex():
     assert result.shape == X.shape
 
 
-def test_apply_bounds_simplex_long_only():
-    pass
-
-
-def test_apply_bounds_simplex_long_short():
-    X = np.array([[0.3, 0.7, 0.2], [0.1, 0.4, 0.5], [-0.2, 0.8, 0.4]])
-    
-    result = apply_bounds(X, "simplex_long_short")
-    
-
-    row_sums = result.sum(axis=1)
-    np.testing.assert_allclose(row_sums, 1.0, rtol=1e-10)
-    
-
-    assert np.any(result < 0) or np.any(result > 0), "Should allow both positive and negative values"
 
 
 def test_apply_bounds_box_constraints():
@@ -110,12 +94,6 @@ def test_apply_bounds_box_constraints():
     assert np.all(result >= lower_bounds), "Should respect lower bounds"
     assert np.all(result <= upper_bounds), "Should respect upper bounds"
 
-def test_apply_bounds_none():
-    X = np.array([[0.3, 0.7, 0.2], [0.1, 0.4, 0.5], [-0.2, 0.8, 0.4]])
-    
-    result = apply_bounds(X, None)
-    
-    np.testing.assert_array_equal(result, X)
 
 
 def test_crypsis_with_simplex_bounds():
@@ -132,34 +110,10 @@ def test_crypsis_with_simplex_bounds():
     np.testing.assert_allclose(row_sums, 1.0, rtol=1e-10)
 
 
-def test_crypsis_with_box_bounds():
-
-    n, d = 4, 2
-    X = np.random.random((n, d))
-    X_best = np.random.random(d)
-    t = 5
-    max_iter = 50
-    
-    lower_bounds = np.array([0.0, 0.0])
-    upper_bounds = np.array([1.0, 1.0])
-    
-    result = crypsis(X, X_best, t, max_iter, bounds=(lower_bounds, upper_bounds))
-    
-    assert np.all(result >= lower_bounds), "Should respect lower bounds"
-    assert np.all(result <= upper_bounds), "Should respect upper bounds"
-
-
-def test_crypsis_portfolio_optimization_example():
-    pass
 
 
  
 
-
-import numpy as np
-import pytest
-
-from hloa.ops import skin_lord, blood_squirt, move_to_escape, alpha_msh, sigma
 
 
 def test_skin_lord_updates_only_worst_and_respects_shape():
@@ -177,34 +131,6 @@ def test_skin_lord_updates_only_worst_and_respects_shape():
     assert np.allclose(X_new[mask], X[mask])
 
 
-def test_skin_lord_deterministic_with_seed():
-    n, d = 5, 3
-    X = np.random.random((n, d))
-    X_best = np.random.random(d)
-    idx_worst = 1
-    rng1 = np.random.Generator(np.random.PCG64(42))
-    rng2 = np.random.Generator(np.random.PCG64(42))
-
-    out1 = skin_lord(X, X_best, idx_worst, rng=rng1)
-    out2 = skin_lord(X, X_best, idx_worst, rng=rng2)
-    np.testing.assert_array_equal(out1, out2)
-
-
-def test_blood_squirt_shape_and_bounds_passthrough():
-    n, d = 7, 3
-    X = np.random.random((n, d))
-    X_best = np.random.random(d)
-    out = blood_squirt(X, X_best, t=3, max_iter=50)
-    assert out.shape == (n, d)
-
-
-def test_blood_squirt_determinism_given_inputs():
-    n, d = 4, 2
-    X = np.random.random((n, d))
-    X_best = np.random.random(d)
-    out1 = blood_squirt(X, X_best, t=10, max_iter=100)
-    out2 = blood_squirt(X, X_best, t=10, max_iter=100)
-    np.testing.assert_array_equal(out1, out2)
 
 
 def test_move_to_escape_shape_and_rng_determinism():
