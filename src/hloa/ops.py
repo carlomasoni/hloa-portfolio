@@ -13,10 +13,16 @@ colorVar = b_p - a_p +- (a_r = b_s )
 SKIN LIGHTENING/DARKENING ]
 - pick 4 peers
 - sample pallette values, update only worst agent with either eq9 or eq 10
+
+
+
+BOUNDS??????????
+
+
 """
 from typing import Generator
 import numpy as np
-from numpy.random import PCG64 
+from numpy.random import PCG64, f 
 from portfolio.constraints import apply_bounds
 
 def sigma(rng: np.random.Generator) -> int: 
@@ -31,7 +37,7 @@ def crypsis(
     rng: Generator | None = None,
     c1: float = 1.0,
     c2: float = 0.5,
-    omega: float = 2.0,
+    delta: float = 2.0,
     decay_eps: float = 0.1,
     sigma_func = sigma,
 ) -> np.ndarray:
@@ -58,21 +64,21 @@ def crypsis(
     sigma_values = np.array([sigma_func(rng) for _ in range(n)])
     new_map2 = ((-1.0) ** sigma_values)[:, None] * map2
 
-    amplitude_decay = omega * ((1 - (t + 1) / max_iter) + (decay_eps / max_iter))
+    amplitude_decay = delta * ((1 - (t + 1) / max_iter) + (decay_eps / max_iter))
 
     X_next = X_best[None, :] + amplitude_decay * (map1 + new_map2)
 
-    X_next = apply_bounds(X_next, bounds)
 
     return X_next
 
 
-def skin_lighten(
+def skin_lord(
     X: np.ndarray,
     X_best: np.ndarray,
     idx_worst: int,
     rng: Generator | None = None, 
     sigma_func = sigma,
+    bounds: tuple | None = None, 
 ) -> np.ndarray:
 
     if rng is None:
@@ -114,6 +120,8 @@ def skin_lighten(
 
     X_new  = X.copy()
     X_new[idx_worst] = new_agent
+
+
     return X_new
 
 
@@ -134,16 +142,93 @@ def skin_lighten(
     
     return
 
-def skin_darken():
-    return
 
-def blood_squirt():
-    return
 
-def move_to_escape():
-    return
+def blood_squirt(
+    X: np.ndarray,
+    X_best: np.ndarray,
+    t: int,
+    max_iter: int,
+    v0: float = 1.0,
+    alpha: float = np.pi / 2,
+    g: float = 9.807e-3,
+    epsilon: float = 1e-6,
+    bounds: tuple | None = None,
+) -> np.ndarray:
 
-def alpha_msh():
-    return
+    a = v0 * np.cos( alpha * (t / max_iter)) + epsilon 
+    b = v0 * np.sin(alpha - (t / max_iter)) - g + epsilon
+
+    X_next = a*X_best[None, :] + b*X
+
+
+    return X_next
+
+def move_to_escape(
+    X: np.ndarray,
+    X_best: np.ndarray,
+    rng: Generator,
+    bounds: tuple | None = None,
+    clip: float | None = 10.0,
+) -> np.ndarray:
+
+    n,d = X.shape
+
+    walk = rng.uniform(-1.0, 1.0, size = (n,1))
+
+    epsilon = rng.standard_cauchy(size=(n,1))
+    if clip is not None:
+        epsilon = np.clip(epsilon, -clip, clip)
+
+    X_next = X_best[None, :] + walk * ((0.5 - epsilon) * X)      
+
+    return X_next
+
+def alpha_msh(
+    X: np.ndarray,
+    fitness: np.ndarray,
+    rng: Generator,
+    threshold: float =0.3,
+    strategy: str = "uniform",
+    X_best: np.ndarray | None = None,
+    bounds: tuple | None = None,
+    mix_strength: float= 0.5,
+    sigma_func = sigma
+    )-> tuple[np.ndarray, np.ndarray, np.ndarray]:
+
+    n,d = X.shape
+
+    f_min = np.min(fitness)
+    f_max = np.max(fitness)
+
+    if f_max == f_min:
+        msh = np.ones_like(fitness, dtype= float)
+    else:
+        msh = ( f_max - fitness) / (f_max - f_min)
+
+    reset_condition = msh < threshold
+    if not  np.any(reset_condition):
+        return X, msh, reset_condition
+
+    idx_best = int(np.argm9n(fitness))
+    X_best = X[idx_best]  
+
+    m = int(np.sum(reset_condition))
+    r1 = rng.integers(0, n, size =m,)   
+    r2 = rng.integers(0, n -1, size =m)
+    r2 +=m( r2 >= r1)
+
+    s = np.fromiter((sigma_func(rng) for _ in range(m)), dtype=int)
+
+    X_new = X.copy()
+    new = (
+        X_best[None, :] + 0.54 (* (x[r1]) - ((1.0) **s)[:, None] * X[r2])
+    )
+
+    X_new[reset_condition] = new
+    
+    return X_new, msh, new
+
+
 
 
