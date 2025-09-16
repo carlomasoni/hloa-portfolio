@@ -86,15 +86,10 @@ def skin_lord(
         rng = np.random.Generator(np.random.PCG64())
 
     n, d = X.shape
-    r_idx = np.empty((n, 4), dtype=int)
-    all_idx = np.arange(n)
-    for i in range(n):
-        if n >= 4:
-            r_idx[i] = rng.permutation(all_idx)[:4]
-        else:
-            r_idx[i] = rng.choice(all_idx, size=4, replace=True)
-
-    r1, r2, r3, r4 = r_idx.T
+    if n >= 4:
+        r1, r2, r3, r4 = rng.choice(np.arange(n), size=4, replace=False)
+    else:
+        r1, r2, r3, r4 = rng.choice(np.arange(n), size=4, replace=True)
 
 
     light_values = [0.0, 0.404661]
@@ -105,14 +100,8 @@ def skin_lord(
 
     s = sigma_func(rng)
 
-    l_agent = (
-        X_best + ( 0.5 * l1 *(np.sin(X[r1]) - X[r2]) ) - (  ((-1.0) ** s) * (0.5  * l2 * np.sin(X[r3]) - X[r4]))
-    
-    )
-    
-    d_agent = (
-        X_best + ( 0.5 * d1 *(np.sin(X[r1]) - X[r2]) ) - (  ((-1.0) ** s) * (0.5  * d2 * np.sin(X[r3]) - X[r4]))
-    )
+    l_agent = X_best + 0.5 * l1 * (np.sin(X[r1]) - X[r2]) - (((-1.0) ** s) * (0.5 * l2 * np.sin(X[r3]) - X[r4]))
+    d_agent = X_best + 0.5 * d1 * (np.sin(X[r1]) - X[r2]) - (((-1.0) ** s) * (0.5 * d2 * np.sin(X[r3]) - X[r4]))
 
     if rng.random() < 0.5:
         new_agent = l_agent
@@ -121,6 +110,9 @@ def skin_lord(
 
     X_new  = X.copy()
     X_new[idx_worst] = new_agent
+
+    if bounds is not None:
+        X_new[idx_worst:idx_worst+1] = apply_bounds(X_new[idx_worst:idx_worst+1], bounds)
 
 
     return X_new
