@@ -184,7 +184,6 @@ def alpha_msh(
 
     s = np.fromiter((sigma_func(rng) for _ in range(m)), dtype=int)
 
-    # Mix towards best with exploration using two peers
     new = X_best[None, :] + 0.5 * (X[r1] - ((-1.0) ** s)[:, None] * X[r2])
 
     X_new = X.copy()
