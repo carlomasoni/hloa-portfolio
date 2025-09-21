@@ -34,7 +34,8 @@ For detailed performance analysis:
 python -c "
 import sys
 sys.path.append('src')
-from hloa.benchmark_runner import BenchmarkRunner
+sys.path.append('benchmarks')
+from benchmark_runner import BenchmarkRunner
 from hloa.core import HLOA_Config
 
 config = HLOA_Config(pop_size=50, iters=200, seed=42)
@@ -53,7 +54,7 @@ runner.print_summary(results)
 For detailed analysis and visualization:
 
 ```bash
-jupyter notebook notebooks/03_hloa_benchmarks.ipynb
+jupyter notebook benchmarks/hloa_benchmarks.ipynb
 ```
 
 ## Benchmark Functions
@@ -135,7 +136,9 @@ config = HLOA_Config(
 Add your own benchmark functions:
 
 ```python
-from hloa.benchmarks import BenchmarkSuite
+import sys
+sys.path.append('benchmarks')
+from benchmarks import BenchmarkSuite
 
 def my_function(x):
     return -np.sum(x**2, axis=1)  # Maximization version
@@ -155,7 +158,12 @@ suite.functions['my_function'] = {
 For rigorous statistical testing:
 
 ```python
+import sys
+sys.path.append('src')
+sys.path.append('benchmarks')
 from scipy import stats
+from benchmark_runner import BenchmarkRunner
+from hloa.core import HLOA_Config
 
 # Run multiple independent tests
 results = []
@@ -192,13 +200,13 @@ Compare your results with:
 
 ```
 src/hloa/
-├── benchmarks.py          # Benchmark function implementations
-├── benchmark_runner.py    # Testing framework and analysis
 ├── core.py               # HLOA algorithm implementation
 └── ops.py                # HLOA operators
 
-notebooks/
-└── 03_hloa_benchmarks.ipynb  # Interactive analysis notebook
+benchmarks/               # 🆕 Dedicated benchmark folder
+├── benchmarks.py         # Benchmark function implementations
+├── benchmark_runner.py   # Testing framework and analysis
+└── hloa_benchmarks.ipynb # Interactive analysis notebook
 
 test_hloa_benchmarks.py   # Quick validation script
 BENCHMARK_TESTING.md      # This guide
