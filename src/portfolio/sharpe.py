@@ -4,8 +4,7 @@ import pandas as pd
 import yfinance as yf
 import datetime as dt
 import scipy as sp
-from datetime import datetime, timedelta  
-import pypoft      
+from datetime import datetime, timedelta       
 
 tickers = [ 'STOXX50E' ] # QQQ, VTI + other markets when needed
 end = datetime.now()
@@ -24,6 +23,9 @@ log_nreturns = log_nreturns.dropna()
 
 
 cov_matrix = log_nreturns.cov()
+
+
+
 
 
 
