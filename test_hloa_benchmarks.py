@@ -3,11 +3,12 @@
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'benchmarks'))
 
 import numpy as np
 from hloa.core import HLOA, HLOA_Config
-from hloa.benchmarks import BenchmarkSuite
-from hloa.benchmark_runner import BenchmarkRunner
+from benchmarks import BenchmarkSuite
+from benchmark_runner import BenchmarkRunner
 
 
 def test_basic_functionality():

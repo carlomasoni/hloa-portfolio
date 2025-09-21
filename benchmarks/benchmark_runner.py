@@ -6,7 +6,11 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 
-from hloa.benchmarks import BenchmarkSuite
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from benchmarks import BenchmarkSuite
 from hloa.core import HLOA, HLOA_Config
 
 

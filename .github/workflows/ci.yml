@@ -79,7 +79,8 @@ jobs:
           python -c "
           import sys
           sys.path.append('src')
-          from hloa.benchmark_runner import BenchmarkRunner
+          sys.path.append('benchmarks')
+          from benchmark_runner import BenchmarkRunner
           from hloa.core import HLOA_Config
           
           config = HLOA_Config(pop_size=30, iters=100, seed=42)
