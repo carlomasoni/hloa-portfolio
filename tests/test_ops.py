@@ -1,21 +1,15 @@
-
-import pytest
 import numpy as np
 
+from hloa.ops import alpha_msh, crypsis, move_to_escape, sigma, skin_lord
 from portfolio.constraints import apply_bounds
-
-from hloa.ops import crypsis, skin_lord, blood_squirt, move_to_escape, alpha_msh, sigma
 
 
 def test_sigma_function():
     rng = np.random.Generator(np.random.PCG64(42))
-    
 
     results = [sigma(rng) for _ in range(100)]
-    
 
     assert all(result in [0, 1] for result in results)
-    
 
     assert 0 in results
     assert 1 in results
@@ -27,10 +21,8 @@ def test_crypsis_basic_functionality():
     X_best = np.random.random(d)
     t = 5
     max_iter = 100
-    
 
     result = crypsis(X, X_best, t, max_iter)
-    
 
     assert result.shape == (n, d)
     assert isinstance(result, np.ndarray)
@@ -47,19 +39,19 @@ def test_crypsis_deterministic_with_seed():
     result1 = crypsis(X, X_best, t, max_iter, rng=rng1)
     rng2 = np.random.Generator(np.random.PCG64(456))
     result2 = crypsis(X, X_best, t, max_iter, rng=rng2)
-    
+
     np.testing.assert_array_equal(result1, result2)
 
 
 def test_crypsis_edge_cases():
     n, d = 3, 2
-    X = np.zeros((n, d))  
-    X_best = np.ones(d)   
+    X = np.zeros((n, d))
+    X_best = np.ones(d)
     t = 0
     max_iter = 1
-    
+
     result = crypsis(X, X_best, t, max_iter)
-    
+
     assert result.shape == (n, d)
     assert not np.any(np.isnan(result))
     assert not np.any(np.isinf(result))
@@ -68,32 +60,26 @@ def test_crypsis_edge_cases():
 def test_apply_bounds_simplex():
     # Test data
     X = np.array([[0.3, 0.7, 0.2], [0.1, 0.4, 0.5], [-0.2, 0.8, 0.4]])
-    
+
     result = apply_bounds(X, "simplex")
-    
 
     assert np.all(result >= 0), "All weights should be non-negative"
-    
 
     row_sums = result.sum(axis=1)
     np.testing.assert_allclose(row_sums, 1.0, rtol=1e-10)
-    
 
     assert result.shape == X.shape
-
-
 
 
 def test_apply_bounds_box_constraints():
     X = np.array([[0.3, 0.7, 0.2], [0.1, 0.4, 0.5], [-0.2, 0.8, 0.4]])
     lower_bounds = np.array([0.0, 0.0, 0.0])
     upper_bounds = np.array([1.0, 1.0, 1.0])
-    
+
     result = apply_bounds(X, (lower_bounds, upper_bounds))
-    
+
     assert np.all(result >= lower_bounds), "Should respect lower bounds"
     assert np.all(result <= upper_bounds), "Should respect upper bounds"
-
 
 
 def test_crypsis_with_simplex_bounds():
@@ -102,18 +88,12 @@ def test_crypsis_with_simplex_bounds():
     X_best = np.random.random(d)
     t = 10
     max_iter = 100
-    
+
     result = crypsis(X, X_best, t, max_iter, bounds="simplex")
-    
+
     assert np.all(result >= 0), "All weights should be non-negative"
     row_sums = result.sum(axis=1)
     np.testing.assert_allclose(row_sums, 1.0, rtol=1e-10)
-
-
-
-
- 
-
 
 
 def test_skin_lord_updates_only_worst_and_respects_shape():
@@ -129,8 +109,6 @@ def test_skin_lord_updates_only_worst_and_respects_shape():
     mask = np.ones(n, dtype=bool)
     mask[idx_worst] = False
     assert np.allclose(X_new[mask], X[mask])
-
-
 
 
 def test_move_to_escape_shape_and_rng_determinism():
@@ -174,6 +152,3 @@ def test_alpha_msh_resets_some_and_applies_bounds_when_requested():
     assert np.any(changed_mask)
     assert np.all(X_out >= lower)
     assert np.all(X_out <= upper)
-
-
-

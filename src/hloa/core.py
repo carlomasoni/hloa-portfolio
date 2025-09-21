@@ -1,14 +1,10 @@
+from typing import Callable, Tuple
+
 import numpy as np
-from numpy.random import Generator, PCG64
-from typing import Tuple, Callable
-from hloa.ops import crypsis, sigma, skin_lord, blood_squirt, move_to_escape, alpha_msh
+from numpy.random import PCG64, Generator
+
+from hloa.ops import alpha_msh, blood_squirt, crypsis, move_to_escape, sigma, skin_lord
 from portfolio.constraints import apply_bounds
-
-
-
-
-
-
 
 
 class HLOA_Config:
@@ -18,8 +14,8 @@ class HLOA_Config:
         iters: int = 750,
         seed: int | None = 42,
         p_mimic: float = 0.6,
-        p_flee: float = 0.2, 
-        alpha_msh_threshold: float = 0.3,  
+        p_flee: float = 0.2,
+        alpha_msh_threshold: float = 0.3,
     ):
         self.pop_size = pop_size
         self.iters = iters
@@ -71,30 +67,66 @@ class HLOA:
         for i in range(self.cfg.iters):
             if self.rng.random() < self.cfg.p_mimic:
                 X = crypsis(
-                    X, w_best, i, self.cfg.iters,
-                    bounds=self.bounds if not isinstance(self.bounds, tuple) else (self.lb, self.ub),
+                    X,
+                    w_best,
+                    i,
+                    self.cfg.iters,
+                    bounds=(
+                        self.bounds
+                        if not isinstance(self.bounds, tuple)
+                        else (self.lb, self.ub)
+                    ),
                     rng=self.rng,
                 )
             else:
                 if self.rng.random() < self.cfg.p_flee:
-                    X = move_to_escape(X, w_best, rng=self.rng, bounds=self.bounds if not isinstance(self.bounds, tuple) else (self.lb, self.ub))
+                    X = move_to_escape(
+                        X,
+                        w_best,
+                        rng=self.rng,
+                        bounds=(
+                            self.bounds
+                            if not isinstance(self.bounds, tuple)
+                            else (self.lb, self.ub)
+                        ),
+                    )
                 else:
-                    X = blood_squirt(X, w_best, i, self.cfg.iters, bounds=self.bounds if not isinstance(self.bounds, tuple) else (self.lb, self.ub))
+                    X = blood_squirt(
+                        X,
+                        w_best,
+                        i,
+                        self.cfg.iters,
+                        bounds=(
+                            self.bounds
+                            if not isinstance(self.bounds, tuple)
+                            else (self.lb, self.ub)
+                        ),
+                    )
 
             f = self.fitness(X)
             worst_idx = int(np.argmin(f))
-            X = skin_lord(X, w_best, worst_idx, rng=self.rng, bounds=self.bounds if not isinstance(self.bounds, tuple) else (self.lb, self.ub), sigma_func=sigma)
+            X = skin_lord(
+                X,
+                w_best,
+                worst_idx,
+                rng=self.rng,
+                bounds=(
+                    self.bounds
+                    if not isinstance(self.bounds, tuple)
+                    else (self.lb, self.ub)
+                ),
+                sigma_func=sigma,
+            )
 
             f = self.fitness(X)
-            X, melanophore, reset_mask = alpha_msh(
+            X, _, reset_mask = alpha_msh(
                 X,
                 f,
                 rng=self.rng,
-                threshold=self.cfg.alpha_msh_threshold,   # default 0.3 per Algorithm 3
+                threshold=self.cfg.alpha_msh_threshold,
                 bounds=(self.lb, self.ub),
-                sigma_func=sigma
+                sigma_func=sigma,
             )
-
 
             a = int(np.argmax(f))
             if f[a] > f_best:

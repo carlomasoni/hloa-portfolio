@@ -5,7 +5,7 @@ Efficient frontier construction and wrappers:
 - Compute risk, return, Sharpe for each solution
 - Identify and return max-Sharpe portfolio
 
--> read up on algos and correct current work cus not fully sure if this is right... 
+-> read up on algos and correct current work cus not fully sure if this is right...
 """
 
 from __future__ import annotations
@@ -13,9 +13,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .objectives import sharpe_ratio
 from .constraints import project_capped_simplex
-def max_sharpe_capped(mu: pd.Series, cov: pd.DataFrame, cap: float = 0.05) -> np.ndarray:
+from .objectives import sharpe_ratio
+
+
+def max_sharpe_capped(
+    mu: pd.Series, cov: pd.DataFrame, cap: float = 0.05
+) -> np.ndarray:
     n = mu.size
     # Start from equal weights under cap
     w = np.full(n, min(1.0 / n, cap), dtype=float)
@@ -40,7 +44,9 @@ def _project_simplex(w: np.ndarray) -> np.ndarray:
     return w / s if s > 0 else np.ones_like(w) / w.size
 
 
-def max_sharpe(mu: pd.Series, cov: pd.DataFrame, n_trials: int = 2000, seed: int | None = 7) -> np.ndarray:
+def max_sharpe(
+    mu: pd.Series, cov: pd.DataFrame, n_trials: int = 2000, seed: int | None = 7
+) -> np.ndarray:
     rng = np.random.default_rng(seed)
     n = mu.size
     best_w = np.ones(n) / n
@@ -54,7 +60,9 @@ def max_sharpe(mu: pd.Series, cov: pd.DataFrame, n_trials: int = 2000, seed: int
     return best_w
 
 
-def sample_frontier(mu: pd.Series, cov: pd.DataFrame, n: int = 25, seed: int | None = 0) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def sample_frontier(
+    mu: pd.Series, cov: pd.DataFrame, n: int = 25, seed: int | None = 0
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     rng = np.random.default_rng(seed)
     n_assets = mu.size
     W = np.zeros((n, n_assets))
