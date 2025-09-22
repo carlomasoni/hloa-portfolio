@@ -5,7 +5,7 @@ Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for
 
 
 ## ---------- To - Do: ----------
-
+'''
 -> Remove the RFRR from the sharpe calculation
 -> compare to market weights
 -> ensure HLOA is finding optimal solutions on n10 problems 
@@ -14,7 +14,7 @@ Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for
 
 ? -> implement higher n problems to compare to paper
 
-
+'''
 
 
 
@@ -93,24 +93,6 @@ MIT License
 
 
 
-hloa-portfolio/
-├── src/                    # Source code
-│   ├── hloa/              # HLOA algorithm implementation
-│   └── portfolio/         # Portfolio optimization modules
-├── scripts/               # Executable scripts
-│   ├── run_hloa_optimization.py
-│   ├── benchmark_optimization.py
-│   ├── test_optimization.py
-│   ├── test_hloa_benchmarks.py
-│   ├── dep_check.py
-│   └── README.md
-├── examples/              # Example notebooks and benchmarks
-│   ├── benchmark_runner.py
-│   ├── benchmarks.py
-│   ├── hloa_benchmarks.ipynb
-│   └── README.md
-├── tests/                 # Test suite
-├── notebooks/             # Jupyter notebooks
 ├── docs/                  # Documentation
 │   └── BENCHMARK_TESTING.md
 ├── requirements.txt       # Dependencies
