@@ -77,17 +77,19 @@ def skin_lord(
     d1, d2 = rng.choice(dark_values, size=2)
 
     s = sigma_func(rng)
+    s12 = np.sin(X[r1] - X[r2])
+    s34 = np.sin(X[r3] - X[r4])
 
     l_agent = (
         X_best
-        + 0.5 * l1 * (np.sin(X[r1]) - X[r2])
-        - (((-1.0) ** s) * (0.5 * l2 * np.sin(X[r3]) - X[r4]))
+        + 0.5 * l1 * s12
+        - ((-1.0) ** s) * (0.5 * l2 * s34)
     )
     d_agent = (
         X_best
-        + 0.5 * d1 * (np.sin(X[r1]) - X[r2])
-        - (((-1.0) ** s) * (0.5 * d2 * np.sin(X[r3]) - X[r4]))
-    )
+        + 0.5 * d1 * s12
+        - ((-1.0) ** s) * (0.5 * d2 * s34)
+)
 
     if rng.random() < 0.5:
         new_agent = l_agent
@@ -117,9 +119,13 @@ def blood_squirt(
     bounds: tuple | None = None,
 ) -> np.ndarray:
     a = v0 * np.cos(alpha * (t / max_iter)) + epsilon
-    b = v0 * np.sin(alpha - (t / max_iter)) - g + epsilon
+    b = v0 * np.sin(alpha - alpha * (t / max_iter)) - g + epsilon
 
     X_next = a * X_best[None, :] + b * X
+
+    if bounds is not None:
+        X_next = apply_bounds(X_next, bounds)
+
 
     return X_next
 
@@ -141,6 +147,8 @@ def move_to_escape(
 
     X_next = X_best[None, :] + walk * ((0.5 - epsilon) * X)
 
+    if bounds is not None:
+        X_next = apply_bounds(X_next, bounds)
     return X_next
 
 
@@ -169,7 +177,7 @@ def alpha_msh(
     if not np.any(reset_condition):
         return X, msh, reset_condition
 
-    idx_best = int(np.argmin(fitness))
+    idx_best = int(np.argmax(fitness))
     X_best = X[idx_best]
 
     m = int(np.sum(reset_condition))

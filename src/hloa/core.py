@@ -40,13 +40,13 @@ class HLOA:
             self.lb, self.ub = (np.asarray(b, dtype=float) for b in bounds)
             self.N = self.lb.size
             self.dim = self.N
-            self.constraint_type = "simplex"
+            self.constraint_type = "box" 
         else:
-            self.lb = None
-            self.ub = None
+            self.lb = self.ub = None
             self.N = None
             self.dim = 0
             self.constraint_type = "none"
+       
 
     def _init_population(self) -> np.ndarray:
         if isinstance(self.bounds, tuple):
@@ -59,81 +59,66 @@ class HLOA:
 
     def run(self) -> tuple[np.ndarray, float, np.ndarray, np.ndarray]:
         X = self._init_population()
-        f = self.fitness(X)
+        f = self.fitness(X)  
         best_idx = int(np.argmax(f))
         w_best = X[best_idx].copy()
         f_best = float(f[best_idx])
 
+        bounds_tuple = None
+        if isinstance(self.bounds, tuple):
+            bounds_tuple = (self.lb, self.ub)
+
         for i in range(self.cfg.iters):
             if self.rng.random() < self.cfg.p_mimic:
                 X = crypsis(
-                    X,
-                    w_best,
-                    i,
-                    self.cfg.iters,
-                    bounds=(
-                        self.bounds
-                        if not isinstance(self.bounds, tuple)
-                        else (self.lb, self.ub)
-                    ),
-                    rng=self.rng,
+                    X, w_best, i, self.cfg.iters,
+                    bounds=bounds_tuple, rng=self.rng
                 )
             else:
                 if self.rng.random() < self.cfg.p_flee:
                     X = move_to_escape(
-                        X,
-                        w_best,
-                        rng=self.rng,
-                        bounds=(
-                            self.bounds
-                            if not isinstance(self.bounds, tuple)
-                            else (self.lb, self.ub)
-                        ),
+                        X, w_best,
+                        rng=self.rng, bounds=bounds_tuple
                     )
                 else:
                     X = blood_squirt(
-                        X,
-                        w_best,
-                        i,
-                        self.cfg.iters,
-                        bounds=(
-                            self.bounds
-                            if not isinstance(self.bounds, tuple)
-                            else (self.lb, self.ub)
-                        ),
+                        X, w_best, i, self.cfg.iters,
+                        bounds=bounds_tuple
                     )
 
             f = self.fitness(X)
             worst_idx = int(np.argmin(f))
             X = skin_lord(
-                X,
-                w_best,
-                worst_idx,
-                rng=self.rng,
-                bounds=(
-                    self.bounds
-                    if not isinstance(self.bounds, tuple)
-                    else (self.lb, self.ub)
-                ),
+                X, w_best, worst_idx,
+                rng=self.rng, bounds=bounds_tuple,
                 sigma_func=sigma,
             )
 
             f = self.fitness(X)
+
             X, _, reset_mask = alpha_msh(
-                X,
-                f,
-                rng=self.rng,
+                X, f, rng=self.rng,
                 threshold=self.cfg.alpha_msh_threshold,
-                bounds=(self.lb, self.ub),
+                bounds=bounds_tuple,
                 sigma_func=sigma,
             )
+
+
+            f = self.fitness(X)
+
 
             a = int(np.argmax(f))
             if f[a] > f_best:
                 f_best = float(f[a])
                 w_best = X[a].copy()
 
+
+            worst_idx = int(np.argmin(f))
+            X[worst_idx] = w_best
+            f[worst_idx] = f_best
+
         return w_best, f_best, X, f
+
 
     def minimize(self):
         raise NotImplementedError

@@ -4,7 +4,7 @@ import pytest
 
 from hloa import HLOA, HLOA_Config
 from portfolio.constraints import project_capped_simplex
-from portfolio.objectives import sharpe_ratio
+from portfolio.frontier import sharpe_ratio
 
 
 def test_optimizer_init_fields():

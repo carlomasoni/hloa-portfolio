@@ -2,20 +2,42 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
 from datetime import datetime, timedelta
+
+import yfinance as yf
 import pypfopt
+
+
+def sharpe_ratio(
+    weights: np.ndarray, mu: pd.Series, cov: pd.DataFrame, rf: float = 0.0
+) -> float:
+    w = np.asarray(weights, dtype=float)
+    ex = float(np.dot(w, (mu - rf)))
+    vol = float(np.sqrt(np.dot(w, cov.values @ w)))
+    if vol <= 0 or not np.isfinite(vol):
+        return float("-inf")
+    return ex / vol
 
 assets = [
     '^FCHI', '^GDAXI', '^FTSE',              
     'FEZ'  
 ]
 
-eurostoxx50_stocks = [
+# Full EuroStoxx 50 list
+eurostoxx50_stocks_full = [
     'ASML.AS', 'UNA.AS', 'AD.AS', 'KPN.AS', 'INGA.AS', 'PHIA.AS', 'SAP.DE', 'SIE.DE', 'ALV.DE', 'DTE.DE', 'BAYN.DE', 'BMW.DE', 'VOW3.DE','NOVN.SW', 'ROG.SW', 'NESN.SW', 'UHR.SW', 'CSGN.SW', 'GIVN.SW','OR.PA', 'SAN.PA', 'MC.PA', 'AI.PA', 'GLE.PA', 'BNP.PA', 'TTE.PA', 'EL.PA', 'VIE.PA','ABI.BR', 'SOLB.BR','ENEL.MI', 'ISP.MI', 'ENI.MI', 'UCG.MI', 'G.MI','SAN.MC', 'BBVA.MC', 'ITX.MC', 'IBE.MC', 'REP.MC','NOKIA.HE', 'SAMPO.HE','NOVO-B.CO', 'DSV.CO','CRH.L', 'GLEN.L'
 ]
 
+# Smaller subset to avoid rate limiting
+eurostoxx50_stocks = [
+    'ASML.AS', 'SAP.DE', 'SIE.DE', 'ALV.DE', 'BMW.DE', 'VOW3.DE', 'NESN.SW', 'ROG.SW', 
+    'OR.PA', 'SAN.PA', 'MC.PA', 'BNP.PA', 'ENEL.MI', 'ENI.MI', 'SAN.MC', 'BBVA.MC'
+]
+
 def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
+    if yf is None or pypfopt is None:
+        raise ImportError("yfinance and pypfopt are required for portfolio data. Install with: pip install yfinance pypfopt")
+    
     end_time = datetime.now()
     start_time = end_time - timedelta(days=time_period_days)
     end_date = end_time.strftime("%Y-%m-%d")
@@ -23,15 +45,43 @@ def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
     all_tickers = assets.copy()
     if include_eurostoxx:
         all_tickers.extend(eurostoxx50_stocks)
-    stock_data = yf.download(
-        all_tickers, 
-        start=start_date, 
-        end=end_date, 
-        interval="1mo", 
-        auto_adjust=False, 
-        progress=True,
-        group_by='ticker'
-    )
+    
+    # Download in smaller batches to avoid rate limiting
+    batch_size = 10
+    all_data = {}
+    
+    print(f"Downloading data for {len(all_tickers)} tickers in batches of {batch_size}...")
+    
+    for i in range(0, len(all_tickers), batch_size):
+        batch_tickers = all_tickers[i:i+batch_size]
+        print(f"Downloading batch {i//batch_size + 1}/{(len(all_tickers) + batch_size - 1)//batch_size}: {batch_tickers}")
+        
+        try:
+            batch_data = yf.download(
+                batch_tickers, 
+                start=start_date, 
+                end=end_date, 
+                interval="1mo", 
+                auto_adjust=False, 
+                progress=False,
+                group_by='ticker'
+            )
+            
+            if not batch_data.empty:
+                all_data.update({ticker: batch_data for ticker in batch_tickers})
+            
+            import time
+            time.sleep(1)
+            
+        except Exception as e:
+            print(f"Warning: Failed to download batch {batch_tickers}: {e}")
+            continue
+    
+    if not all_data:
+        raise ValueError("No data could be downloaded. Please check your internet connection and try again.")
+    
+    # Combine all data
+    stock_data = pd.concat(all_data.values(), axis=1, keys=all_data.keys())
     
     if isinstance(stock_data.columns, pd.MultiIndex):
         stock_data.columns = ['_'.join(col).strip() for col in stock_data.columns.values]
@@ -77,19 +127,25 @@ def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
 
 def get_risk_free_rate(currency='EUR', source='yfinance'):
     if source == 'yfinance':
+        if yf is None:
+            raise ImportError("yfinance is required for risk-free rate data. Install with: pip install yfinance")
         try:
             if currency == 'EUR':
-                bund_ticker = "^TNX"
-                risk_free_data = yf.download(bund_ticker, period="1mo", interval="1d")
+                # Use German 10-year bond yield as proxy for EUR risk-free rate
+                bund_ticker = "^TNX"  # US 10-year Treasury as fallback
+                risk_free_data = yf.download(bund_ticker, period="1mo", interval="1d", progress=False)
                 if not risk_free_data.empty:
                     latest_yield = risk_free_data['Close'].iloc[-1]
                     risk_free_rate = float(latest_yield) / 100
+                    print(f"Using risk-free rate: {risk_free_rate:.4f} ({risk_free_rate*100:.2f}%)")
                 else:
                     risk_free_rate = 0.02
+                    print("Using default risk-free rate: 2.00%")
             else:
                 print(f"Currency {currency} not supported, using default 2%")
                 risk_free_rate = 0.02
-        except:
+        except Exception as e:
+            print(f"Warning: Could not fetch risk-free rate ({e}), using default 2%")
             risk_free_rate = 0.02
     else:
         risk_free_rate = 0.025
@@ -97,7 +153,6 @@ def get_risk_free_rate(currency='EUR', source='yfinance'):
 
 def optimize_portfolio_sharpe(time_period_days=30, include_eurostoxx=True, risk_free_rate=None, currency='EUR'):
     from hloa.core import HLOA, HLOA_Config
-    from portfolio.objectives import sharpe_ratio
     from portfolio.constraints import project_capped_simplex
     
     if risk_free_rate is None:
@@ -131,7 +186,7 @@ def optimize_portfolio_sharpe(time_period_days=30, include_eurostoxx=True, risk_
     
     portfolio_return = float(np.dot(w_optimal, mu))
     portfolio_vol = float(np.sqrt(np.dot(w_optimal, cov_matrix.values @ w_optimal)))
-    sharpe_ratio_final = portfolio_return / portfolio_vol if portfolio_vol > 0 else 0
+    sharpe_ratio_final = sharpe_ratio(w_optimal, mu, cov_matrix, rf=risk_free_rate)
     
     results = {
         'optimal_weights': dict(zip(mu.index, w_optimal)),

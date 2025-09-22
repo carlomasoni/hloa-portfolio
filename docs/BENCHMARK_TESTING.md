@@ -18,7 +18,7 @@ The benchmark testing system validates your HLOA implementation by comparing its
 Run the basic validation test to ensure your HLOA implementation works correctly:
 
 ```bash
-python test_hloa_benchmarks.py
+python scripts/test_hloa_benchmarks.py
 ```
 
 This will:
