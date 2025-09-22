@@ -10,8 +10,8 @@ from portfolio.constraints import apply_bounds
 class HLOA_Config:
     def __init__(
         self,
-        pop_size: int = 150,
-        iters: int = 750,
+        pop_size: int = 300,
+        iters: int = 2000,
         seed: int | None = 42,
         p_mimic: float = 0.6,
         p_flee: float = 0.2,

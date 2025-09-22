@@ -60,42 +60,34 @@ def test_hloa_portfolio_optimization():
     n_agents = 20
     n_iters = 50
 
-    # Create synthetic market data
     np.random.seed(42)
     returns = np.random.normal(0.01, 0.05, (100, n_assets))
     mu = pd.Series(np.mean(returns, axis=0))
     cov = pd.DataFrame(np.cov(returns.T))
 
-    # Define objective: maximize Sharpe ratio
     def portfolio_fitness(weights):
         fitness_scores = np.zeros(weights.shape[0])
         for i, w in enumerate(weights):
-            # Project to capped simplex (5% cap, sum to 1)
             w_proj = project_capped_simplex(w, total=1.0, cap=0.05)
             fitness_scores[i] = sharpe_ratio(w_proj, mu, cov, rf=0.0)
         return fitness_scores
 
-    # Set up HLOA with bounds
     lb = np.zeros(n_assets)
     ub = np.ones(n_assets)
     config = HLOA_Config(pop_size=n_agents, iters=n_iters, seed=42)
 
     opt = HLOA(obj=portfolio_fitness, bounds=(lb, ub), config=config)
 
-    # Run optimization
     w_best, f_best, X_final, f_final = opt.run()
 
-    # Verify results
     assert w_best.shape == (n_assets,)
     assert f_best > -np.inf
     assert np.all(w_best >= 0)
     assert np.all(w_best <= 1)
 
-    # Check that final population respects bounds
     assert np.all(X_final >= 0)
     assert np.all(X_final <= 1)
 
-    # Verify improvement over random baseline
     random_weights = np.random.random((n_agents, n_assets))
     random_fitness = portfolio_fitness(random_weights)
     assert f_best >= np.max(random_fitness)
@@ -105,12 +97,11 @@ def test_hloa_deterministic_reproducibility():
     """Test that HLOA produces identical results with same seed."""
 
     def simple_obj(X):
-        return -np.sum(X**2, axis=1)  # Minimize sum of squares
+        return -np.sum(X**2, axis=1)
 
     bounds = (np.array([-1.0, -1.0]), np.array([1.0, 1.0]))
     config = HLOA_Config(pop_size=10, iters=20, seed=123)
 
-    # Run twice with same seed
     opt1 = HLOA(obj=simple_obj, bounds=bounds, config=config)
     w1, f1, _, _ = opt1.run()
 
@@ -125,7 +116,6 @@ def test_hloa_convergence_behavior():
     """Test that HLOA improves over iterations."""
 
     def quadratic_obj(X):
-        # Global minimum at [0.5, 0.5]
         return -np.sum((X - 0.5) ** 2, axis=1)
 
     bounds = (np.array([0.0, 0.0]), np.array([1.0, 1.0]))
@@ -134,8 +124,7 @@ def test_hloa_convergence_behavior():
     opt = HLOA(obj=quadratic_obj, bounds=bounds, config=config)
     w_best, f_best, X_final, f_final = opt.run()
 
-    # Should improve over random initialization
-    assert f_best > -0.5  # Better than random
+    assert f_best > -0.5
 
 
 def test_hloa_with_different_bounds():
@@ -144,12 +133,10 @@ def test_hloa_with_different_bounds():
     def linear_obj(X):
         return X.sum(axis=1)
 
-    # Test with box constraints
     bounds = (np.array([0.0, 0.0]), np.array([1.0, 1.0]))
     config = HLOA_Config(pop_size=10, iters=15, seed=789)
 
     opt = HLOA(obj=linear_obj, bounds=bounds, config=config)
     w_best, f_best, _, _ = opt.run()
 
-    # Should improve over random initialization
-    assert f_best > 0.5  # Better than random
+    assert f_best > 0.5

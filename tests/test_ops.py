@@ -58,7 +58,6 @@ def test_crypsis_edge_cases():
 
 
 def test_apply_bounds_simplex():
-    # Test data
     X = np.array([[0.3, 0.7, 0.2], [0.1, 0.4, 0.5], [-0.2, 0.8, 0.4]])
 
     result = apply_bounds(X, "simplex")

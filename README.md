@@ -1,14 +1,14 @@
 # HLOA Portfolio Optimization
 
-Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) and QUBO (Quadratic Unconstrained Binary Optimization) methods for EuroStoxx 50 stocks.
+Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for EuroStoxx 50 stocks.
 
 ## Features
 
 - **HLOA Optimization**: Continuous weight optimization using evolutionary algorithms
-- **QUBO Optimization**: Binary asset selection with equal weighting
 - **EuroStoxx 50 Support**: Optimized for European markets
 - **Risk-Free Rate Calculation**: Automatic market data integration
 - **Sharpe Ratio Maximization**: Risk-adjusted return optimization
+- **5% Weight Cap**: Individual asset weight constraint
 
 ## Project Structure
 
@@ -39,9 +39,9 @@ python3 -m pip install --user --break-system-packages -r requirements.txt
 
 ```bash
 # Run HLOA optimization for EuroStoxx 50
-python scripts/run_hloa_optimization.py
+python run_eurostoxx_optimization.py
 
-# Compare HLOA vs QUBO methods
+# Run HLOA benchmark
 python scripts/benchmark_optimization.py
 
 # Run comprehensive tests
@@ -62,17 +62,6 @@ results = optimize_portfolio_sharpe(
 )
 ```
 
-### QUBO Optimization
-```python
-from portfolio.qubo_optimization import optimize_portfolio_qubo
-
-results = optimize_portfolio_qubo(
-    time_period_days=2000,
-    include_eurostoxx=True,
-    max_assets=10,
-    method='simulated_annealing'
-)
-```
 
 ## Results
 
