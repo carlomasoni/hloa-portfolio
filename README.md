@@ -2,6 +2,26 @@
 
 Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for EuroStoxx 50 stocks.
 
+
+
+## ---------- To - Do: ----------
+
+-> Remove the RFRR from the sharpe calculation
+-> compare to market weights
+-> ensure HLOA is finding optimal solutions on n10 problems 
+-> rework data collection to work offline for testing 
+
+
+? -> implement higher n problems to compare to paper
+
+
+
+
+
+
+
+
+
 ## Features
 
 - **HLOA Optimization**: Continuous weight optimization using evolutionary algorithms
@@ -10,20 +30,6 @@ Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for
 - **Sharpe Ratio Maximization**: Risk-adjusted return optimization
 - **5% Weight Cap**: Individual asset weight constraint
 
-## Project Structure
-
-```
-hloa-portfolio/
-├── src/                    # Source code
-│   ├── hloa/              # HLOA algorithm implementation
-│   └── portfolio/         # Portfolio optimization modules
-├── scripts/               # Executable scripts
-├── examples/              # Example notebooks and benchmarks
-├── tests/                 # Test suite
-├── notebooks/             # Jupyter notebooks
-├── docs/                  # Documentation
-└── requirements.txt       # Dependencies
-```
 
 ## Installation
 
