@@ -5,7 +5,7 @@ Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for
 
 
 ## ---------- To - Do: ----------
-'''
+```
 -> Remove the RFRR from the sharpe calculation
 -> compare to market weights
 -> ensure HLOA is finding optimal solutions on n10 problems 
@@ -13,8 +13,7 @@ Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for
 
 
 ? -> implement higher n problems to compare to paper
-
-'''
+```
 
 
 
