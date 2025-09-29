@@ -40,13 +40,12 @@ class HLOA:
             self.lb, self.ub = (np.asarray(b, dtype=float) for b in bounds)
             self.N = self.lb.size
             self.dim = self.N
-            self.constraint_type = "box" 
+            self.constraint_type = "box"
         else:
             self.lb = self.ub = None
             self.N = None
             self.dim = 0
             self.constraint_type = "none"
-       
 
     def _init_population(self) -> np.ndarray:
         if isinstance(self.bounds, tuple):
@@ -59,7 +58,7 @@ class HLOA:
 
     def run(self) -> tuple[np.ndarray, float, np.ndarray, np.ndarray]:
         X = self._init_population()
-        f = self.fitness(X)  
+        f = self.fitness(X)
         best_idx = int(np.argmax(f))
         w_best = X[best_idx].copy()
         f_best = float(f[best_idx])
@@ -103,15 +102,12 @@ class HLOA:
                 sigma_func=sigma,
             )
 
-
             f = self.fitness(X)
-
 
             a = int(np.argmax(f))
             if f[a] > f_best:
                 f_best = float(f[a])
                 w_best = X[a].copy()
-
 
             worst_idx = int(np.argmin(f))
             X[worst_idx] = w_best

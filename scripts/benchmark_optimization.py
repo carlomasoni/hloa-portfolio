@@ -22,13 +22,13 @@ def create_mock_data():
 
 def benchmark_frontier_optimization():
     print("Benchmarking Frontier Optimization (HLOA)...")
-    
+
     try:
         from portfolio.frontier import optimize_portfolio_sharpe
         
         with patch('portfolio.frontier.yf.download') as mock_download, \
              patch('portfolio.frontier.get_risk_free_rate') as mock_rf:
-            
+
             mock_data = create_mock_data()
             mock_download.return_value = mock_data
             mock_rf.return_value = 0.025
@@ -47,7 +47,7 @@ def benchmark_frontier_optimization():
                     np.random.randn(100, 15),
                     np.random.randn(100)
                 )
-                
+
                 start_time = time.time()
                 results = optimize_portfolio_sharpe(
                     time_period_days=1800,
@@ -55,15 +55,15 @@ def benchmark_frontier_optimization():
                     risk_free_rate=0.025
                 )
                 end_time = time.time()
-                
+
                 execution_time = end_time - start_time
-                
+
                 print(f"Frontier optimization completed in {execution_time:.3f} seconds")
                 print(f"  - Sharpe Ratio: {results.get('sharpe_ratio', 'N/A'):.4f}")
                 print(f"  - Expected Return: {results.get('expected_return', 'N/A'):.4f}")
                 print(f"  - Volatility: {results.get('volatility', 'N/A'):.4f}")
                 print(f"  - Number of Assets: {results.get('n_assets', 'N/A')}")
-                
+
                 return {
                     'method': 'HLOA',
                     'execution_time': execution_time,

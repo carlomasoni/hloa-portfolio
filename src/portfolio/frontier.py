@@ -22,13 +22,9 @@ assets = [
     '^FCHI', '^GDAXI', '^FTSE',              
     'FEZ'  
 ]
-
-# Full EuroStoxx 50 list
 eurostoxx50_stocks_full = [
     'ASML.AS', 'UNA.AS', 'AD.AS', 'KPN.AS', 'INGA.AS', 'PHIA.AS', 'SAP.DE', 'SIE.DE', 'ALV.DE', 'DTE.DE', 'BAYN.DE', 'BMW.DE', 'VOW3.DE','NOVN.SW', 'ROG.SW', 'NESN.SW', 'UHR.SW', 'CSGN.SW', 'GIVN.SW','OR.PA', 'SAN.PA', 'MC.PA', 'AI.PA', 'GLE.PA', 'BNP.PA', 'TTE.PA', 'EL.PA', 'VIE.PA','ABI.BR', 'SOLB.BR','ENEL.MI', 'ISP.MI', 'ENI.MI', 'UCG.MI', 'G.MI','SAN.MC', 'BBVA.MC', 'ITX.MC', 'IBE.MC', 'REP.MC','NOKIA.HE', 'SAMPO.HE','NOVO-B.CO', 'DSV.CO','CRH.L', 'GLEN.L'
 ]
-
-# Smaller subset to avoid rate limiting
 eurostoxx50_stocks = [
     'ASML.AS', 'SAP.DE', 'SIE.DE', 'ALV.DE', 'BMW.DE', 'VOW3.DE', 'NESN.SW', 'ROG.SW', 
     'OR.PA', 'SAN.PA', 'MC.PA', 'BNP.PA', 'ENEL.MI', 'ENI.MI', 'SAN.MC', 'BBVA.MC'
@@ -45,17 +41,15 @@ def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
     all_tickers = assets.copy()
     if include_eurostoxx:
         all_tickers.extend(eurostoxx50_stocks)
-    
-    # Download in smaller batches to avoid rate limiting
     batch_size = 10
     all_data = {}
-    
+
     print(f"Downloading data for {len(all_tickers)} tickers in batches of {batch_size}...")
-    
+
     for i in range(0, len(all_tickers), batch_size):
         batch_tickers = all_tickers[i:i+batch_size]
         print(f"Downloading batch {i//batch_size + 1}/{(len(all_tickers) + batch_size - 1)//batch_size}: {batch_tickers}")
-        
+
         try:
             batch_data = yf.download(
                 batch_tickers, 
@@ -69,20 +63,18 @@ def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
             
             if not batch_data.empty:
                 all_data.update({ticker: batch_data for ticker in batch_tickers})
-            
+
             import time
             time.sleep(1)
-            
+
         except Exception as e:
             print(f"Warning: Failed to download batch {batch_tickers}: {e}")
             continue
-    
+
     if not all_data:
         raise ValueError("No data could be downloaded. Please check your internet connection and try again.")
-    
-    # Combine all data
     stock_data = pd.concat(all_data.values(), axis=1, keys=all_data.keys())
-    
+
     if isinstance(stock_data.columns, pd.MultiIndex):
         stock_data.columns = ['_'.join(col).strip() for col in stock_data.columns.values]
         adj_close_cols = [col for col in stock_data.columns if 'Adj Close' in col]
@@ -90,9 +82,9 @@ def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
         stock_df.columns = [col.replace('_Adj Close', '') for col in stock_df.columns]
     else:
         stock_df = pd.DataFrame(stock_data['Adj Close']).rename(columns={'Adj Close': all_tickers[0]})
-    
+
     returns_and_vols = {}
-    
+
     valid_tickers = []
     for ticker in stock_df.columns:
         prices = stock_df[[ticker]].dropna()
@@ -107,7 +99,7 @@ def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
                     not np.isnan(vol.iloc[0]) and 
                     not np.isinf(exp_return.iloc[0]) and 
                     not np.isinf(vol.iloc[0])):
-                    
+
                     returns_and_vols[ticker] = {
                         "ret": exp_return.iloc[0], 
                         "vol": vol.iloc[0]
@@ -118,10 +110,10 @@ def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
     stock_df = stock_df[valid_tickers]
     stock_df = stock_df.reindex(sorted(stock_df.columns), axis=1)
     corr_matrix_df = stock_df.corr(method="pearson")
-    
+
     benchmark_tickers = ['^GSPC', '^IXIC', '^DJI', '^FCHI', '^GDAXI', '^FTSE', 'FEZ']
     benchmark_df = stock_df[[ticker for ticker in benchmark_tickers if ticker in stock_df.columns]].copy()
-    
+
     ret_and_vol = pd.DataFrame(returns_and_vols).transpose()
     return stock_df, benchmark_df, ret_and_vol, corr_matrix_df
 
@@ -131,8 +123,7 @@ def get_risk_free_rate(currency='EUR', source='yfinance'):
             raise ImportError("yfinance is required for risk-free rate data. Install with: pip install yfinance")
         try:
             if currency == 'EUR':
-                # Use German 10-year bond yield as proxy for EUR risk-free rate
-                bund_ticker = "^TNX"  # US 10-year Treasury as fallback
+                bund_ticker = "^TNX"
                 risk_free_data = yf.download(bund_ticker, period="1mo", interval="1d", progress=False)
                 if not risk_free_data.empty:
                     latest_yield = risk_free_data['Close'].iloc[-1]
@@ -157,37 +148,37 @@ def optimize_portfolio_sharpe(time_period_days=30, include_eurostoxx=True, risk_
     
     if risk_free_rate is None:
         risk_free_rate = get_risk_free_rate(currency=currency, source='yfinance')
-    
+
     stock_df, _, ret_and_vol, _ = get_portfolio_data(
         time_period_days, include_eurostoxx
     )
     
     mu = ret_and_vol['ret']
     cov_matrix = stock_df.pct_change().dropna().cov() * 12
-    
+
     n_assets = len(mu)
-    
+
     def portfolio_fitness(weights):
         fitness_scores = np.zeros(weights.shape[0])
         for i, w in enumerate(weights):
             w_proj = project_capped_simplex(w, total=1.0, cap=0.05)
             fitness_scores[i] = sharpe_ratio(w_proj, mu, cov_matrix, rf=risk_free_rate)
         return fitness_scores
-    
+
     lb = np.zeros(n_assets)
     ub = np.ones(n_assets)
     config = HLOA_Config(pop_size=200, iters=1000, seed=42)
-    
+
     opt = HLOA(obj=portfolio_fitness, bounds=(lb, ub), config=config)
-    
+
     w_best, f_best, _, _ = opt.run()
-    
+
     w_optimal = project_capped_simplex(w_best, total=1.0, cap=0.05)
-    
+
     portfolio_return = float(np.dot(w_optimal, mu))
     portfolio_vol = float(np.sqrt(np.dot(w_optimal, cov_matrix.values @ w_optimal)))
     sharpe_ratio_final = sharpe_ratio(w_optimal, mu, cov_matrix, rf=risk_free_rate)
-    
+
     results = {
         'optimal_weights': dict(zip(mu.index, w_optimal)),
         'sharpe_ratio': sharpe_ratio_final,
@@ -198,7 +189,7 @@ def optimize_portfolio_sharpe(time_period_days=30, include_eurostoxx=True, risk_
         'asset_names': list(mu.index),
         'optimization_fitness': f_best
     }
-    
+
     return results
 
 if __name__ == "__main__":

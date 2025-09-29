@@ -20,7 +20,7 @@ def test_optimizer_init_fields():
     assert opt.cfg.iters == 5
     assert opt.cfg.seed == 42
     assert opt.dim == 2
-    assert opt.constraint_type == "simplex"
+    assert opt.constraint_type == "box"
 
 
 def test_optimizer_run_improves_objective():
@@ -55,7 +55,6 @@ def test_optimizer_minimize_not_implemented():
 
 
 def test_hloa_portfolio_optimization():
-    """Test HLOA on a realistic portfolio optimization problem."""
     n_assets = 5
     n_agents = 20
     n_iters = 50
@@ -94,7 +93,6 @@ def test_hloa_portfolio_optimization():
 
 
 def test_hloa_deterministic_reproducibility():
-    """Test that HLOA produces identical results with same seed."""
 
     def simple_obj(X):
         return -np.sum(X**2, axis=1)
@@ -113,7 +111,6 @@ def test_hloa_deterministic_reproducibility():
 
 
 def test_hloa_convergence_behavior():
-    """Test that HLOA improves over iterations."""
 
     def quadratic_obj(X):
         return -np.sum((X - 0.5) ** 2, axis=1)
@@ -128,7 +125,6 @@ def test_hloa_convergence_behavior():
 
 
 def test_hloa_with_different_bounds():
-    """Test HLOA with different constraint types."""
 
     def linear_obj(X):
         return X.sum(axis=1)

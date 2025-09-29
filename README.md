@@ -50,33 +50,11 @@ python run_eurostoxx_optimization.py
 # Run HLOA benchmark
 python scripts/benchmark_optimization.py
 
-# Run comprehensive tests
-python scripts/test_optimization.py
+
 ```
 
-## Usage
-
-### HLOA Optimization
-```python
-from portfolio.frontier import optimize_portfolio_sharpe
-
-results = optimize_portfolio_sharpe(
-    time_period_days=2000,
-    include_eurostoxx=True,
-    risk_free_rate=None,
-    currency='EUR'
-)
 ```
 
-
-## Results
-
-The optimization provides:
-- Optimal portfolio weights
-- Sharpe ratio
-- Expected return and volatility
-- Risk-free rate
-- Diversification metrics
 
 ## Dependencies
 
@@ -87,32 +65,3 @@ The optimization provides:
 - PyPortfolioOpt >= 1.5.0
 - scipy >= 1.3
 
-## License
-
-MIT License
-
-
-
-hloa-portfolio/
-├── src/                    # Source code
-│   ├── hloa/              # HLOA algorithm implementation
-│   └── portfolio/         # Portfolio optimization modules
-├── scripts/               # Executable scripts
-│   ├── run_hloa_optimization.py
-│   ├── benchmark_optimization.py
-│   ├── test_optimization.py
-│   ├── test_hloa_benchmarks.py
-│   ├── dep_check.py
-│   └── README.md
-├── examples/              # Example notebooks and benchmarks
-│   ├── benchmark_runner.py
-│   ├── benchmarks.py
-│   ├── hloa_benchmarks.ipynb
-│   └── README.md
-├── tests/                 # Test suite
-├── notebooks/             # Jupyter notebooks
-├── docs/                  # Documentation
-│   └── BENCHMARK_TESTING.md
-├── requirements.txt       # Dependencies
-├── .gitignore            # Git ignore rules
-└── README.md             # Updated project documentation

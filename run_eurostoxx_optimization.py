@@ -13,7 +13,7 @@ def main():
     
     print("\nRunning HLOA optimization on EuroStoxx 50 data...")
     print("This may take a few moments to download data and optimize...\n")
-    
+
     try:
         results = optimize_portfolio_sharpe(
             time_period_days=2000,
@@ -24,7 +24,7 @@ def main():
         print("\n" + "="*80)
         print("OPTIMIZATION RESULTS")
         print("="*80)
-        
+
         print(f"PORTFOLIO PERFORMANCE:")
         print(f"   Sharpe Ratio:     {results['sharpe_ratio']:.4f}")
         print(f"   Expected Return:  {results['expected_return']:.4f} ({results['expected_return']*100:.2f}%)")
@@ -34,16 +34,16 @@ def main():
         
         print(f"OPTIMAL PORTFOLIO WEIGHTS:")
         print("-" * 80)
-        
+
         sorted_weights = sorted(results['optimal_weights'].items(), 
                               key=lambda x: x[1], reverse=True)
-        
+
         total_weight = 0
         for i, (asset, weight) in enumerate(sorted_weights, 1):
             percentage = weight * 100
             total_weight += weight
             print(f"   {i:2d}. {asset:<12} : {weight:.3f} ({percentage:5.1f}%)")
-        
+
         print("-" * 80)
         print(f"   Total Weight:     {total_weight:.3f} ({total_weight*100:.1f}%)")
         
@@ -57,7 +57,7 @@ def main():
         max_weight = max(weights_list)
         min_weight = min(weights_list)
         avg_weight = sum(weights_list) / len(weights_list)
-        
+
         print(f"   Assets with >0.1% weight: {len([w for w in weights_list if w > 0.001])}")
         print(f"   Maximum weight:           {max_weight:.3f} ({max_weight*100:.1f}%)")
         print(f"   Minimum weight:           {min_weight:.3f} ({min_weight*100:.1f}%)")

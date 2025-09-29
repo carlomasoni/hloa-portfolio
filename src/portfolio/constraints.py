@@ -10,16 +10,16 @@ def project_capped_simplex(
 ) -> np.ndarray:
     w = np.asarray(w, dtype=float)
     w = np.clip(w, 0.0, cap)
-    
+
     if np.isclose(w.sum(), total):
         return w
-    
+
     current_sum = w.sum()
-    
+
     if current_sum > 0:
         scale_factor = total / current_sum
         x = w * scale_factor
-        
+
         if x.max() > cap:
             x = np.clip(x, 0.0, cap)
             new_sum = x.sum()
@@ -68,5 +68,4 @@ def apply_bounds(
             X_next = np.where(row_sums != 0, X_next / row_sums, 1.0 / X_next.shape[1])
 
     return X_next
-
 

@@ -62,7 +62,7 @@ def test_apply_bounds_simplex():
 
     result = apply_bounds(X, "simplex")
 
-    assert np.all(result >= 0), "All weights should be non-negative"
+    assert np.all(result >= 0)
 
     row_sums = result.sum(axis=1)
     np.testing.assert_allclose(row_sums, 1.0, rtol=1e-10)
@@ -77,8 +77,8 @@ def test_apply_bounds_box_constraints():
 
     result = apply_bounds(X, (lower_bounds, upper_bounds))
 
-    assert np.all(result >= lower_bounds), "Should respect lower bounds"
-    assert np.all(result <= upper_bounds), "Should respect upper bounds"
+    assert np.all(result >= lower_bounds)
+    assert np.all(result <= upper_bounds)
 
 
 def test_crypsis_with_simplex_bounds():
@@ -90,7 +90,7 @@ def test_crypsis_with_simplex_bounds():
 
     result = crypsis(X, X_best, t, max_iter, bounds="simplex")
 
-    assert np.all(result >= 0), "All weights should be non-negative"
+    assert np.all(result >= 0)
     row_sums = result.sum(axis=1)
     np.testing.assert_allclose(row_sums, 1.0, rtol=1e-10)
 
