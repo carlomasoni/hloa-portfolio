@@ -12,16 +12,15 @@ def main():
     
     print("\nRunning HLOA optimization on EuroStoxx 50 data...")
     print("This may take a few moments to download data and optimize...\n")
-
     try:
         results = optimize_portfolio_sharpe(
-            time_period_days=2000,
+            time_period_days=30,
             include_eurostoxx=True,
             currency='EUR'
         )
         
         print("\n" + "="*80)
-        print("OPTIMIZATION RESULTS")
+        print(" RESULTS")
         print("="*80)
 
         print(f"PORTFOLIO PERFORMANCE:")
@@ -36,7 +35,6 @@ def main():
 
         sorted_weights = sorted(results['optimal_weights'].items(), 
                               key=lambda x: x[1], reverse=True)
-
         total_weight = 0
         for i, (asset, weight) in enumerate(sorted_weights, 1):
             percentage = weight * 100
@@ -45,11 +43,6 @@ def main():
 
         print("-" * 80)
         print(f"   Total Weight:     {total_weight:.3f} ({total_weight*100:.1f}%)")
-        
-        print(f"TOP 10 ASSETS:")
-        for i, (asset, weight) in enumerate(sorted_weights[:10], 1):
-            percentage = weight * 100
-            print(f"   {i:2d}. {asset:<12} : {percentage:5.1f}%")
         
         print(f"DIVERSIFICATION METRICS:")
         weights_list = list(results['optimal_weights'].values())

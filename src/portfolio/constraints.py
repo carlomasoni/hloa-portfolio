@@ -38,6 +38,7 @@ def project_capped_simplex(
         return x
 
 
+
 def apply_bounds(
     X_next: np.ndarray, bounds: Union[Tuple[np.ndarray, np.ndarray], str, None] = None
 ) -> np.ndarray:
