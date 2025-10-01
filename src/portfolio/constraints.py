@@ -37,12 +37,6 @@ def sharpe_ratio(weights: np.ndarray, mu: pd.Series, cov: pd.DataFrame, rf: floa
     return ex / vol
 
 
-
-
-
-
-
-
 def apply_bounds(
     X_next: np.ndarray, bounds: Union[Tuple[np.ndarray, np.ndarray], str, None] = None) -> np.ndarray:
     if bounds is None:

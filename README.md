@@ -29,14 +29,10 @@ python3 -m pip install --user --break-system-packages -r requirements.txt
 
 ```bash
 # Run HLOA optimization for EuroStoxx 50
-python run_eurostoxx_optimization.py
+python main.py
 
 # Run HLOA benchmark
 python scripts/benchmark_optimization.py
-
-
-```
-
 ```
 
 
@@ -45,7 +41,7 @@ python scripts/benchmark_optimization.py
 - numpy >= 1.26.0
 - pandas >= 0.19
 - matplotlib >= 3.0
-- yfinance >= 0.2.0
+- pandas-datareader >= 0.10.0
 - PyPortfolioOpt >= 1.5.0
 - scipy >= 1.3
 
