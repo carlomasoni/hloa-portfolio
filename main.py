@@ -10,32 +10,23 @@ from pypfopt import expected_returns, risk_models
 
 from hloa.core import HLOA, HLOA_Config
 from portfolio.constraints import project_capped_simplex, sharpe_ratio
+from portfolio.sx50 import fetch_latest_sx5e_constituents
+
 
 print("Imports successful")
+
+
+
+
 
 
 LOOKBACK_DAYS = 2000         
 INTERVAL = "1mo"            
 CAP = 0.05                   
 SEED = 42
-TICKERS = [
-    "ASML.AS","ADYEN.AS","PHIA.AS","INGA.AS","HEIA.AS","PRX.AS",
-    "SAP.DE","SIE.DE","ALV.DE","DTE.DE","BAYN.DE","BMW.DE","VOW3.DE","IFX.DE","MUV2.DE",
-    "AIR.PA","OR.PA","MC.PA","RMS.PA","AI.PA","SU.PA","SAF.PA","BN.PA","CAP.PA","ACA.PA","DG.PA","ORP.PA",
-    "SAN.MC","BBVA.MC","ITX.MC","IBE.MC","TEF.MC","AMS.MC",
-    "ENEL.MI","ENI.MI","ISP.MI","UCG.MI","STM.MI","PRY.MI","ATL.MI",
-    "NOKIA.HE","SAMPO.HE","KNEBV.HE",
-    "ABI.BR","SOLB.BR","KBC.BR",
-    "CRH.L",             
-    "OMV.VI","VER.VI",     
-    "EDP.LS","GALP.LS",
-    "MT.AS",               
-    "FER.MC",              
-    "KER.PA","EL.PA","TTE.PA","VIV.PA","ORA.PA","SGO.PA",
-]
+TICKERS = fetch_latest_sx5e_constituents()
 
-
-_SUFFIX_MAP = {
+SUFFIX_MAP = {
     ".AS": ".nl",  
     ".DE": ".de",  
     ".PA": ".fr",  
@@ -57,7 +48,7 @@ def ensure_feasible_cap(N: int, cap: float) -> float:
 
 def _stooq_candidates(ticker: str):
     yield ticker
-    for ysuf, ssuf in _SUFFIX_MAP.items():
+    for ysuf, ssuf in SUFFIX_MAP.items():
         if ticker.endswith(ysuf):
             base = ticker[: -len(ysuf)]
             yield (base + ssuf).lower()
