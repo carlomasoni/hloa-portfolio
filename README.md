@@ -7,10 +7,8 @@ Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for
 ## ---------- To - Do: ----------
 ```
 -> Remove the RFRR from the sharpe calculation [DONE]
--> compare to market weights []
--> ensure HLOA is finding optimal solutions on n10 problems [SORT OF DONE]
+-> ensure HLOA is finding optimal solutions on n10 problems [DONE]
 -> rework data collection to work offline for testing []
--> use fred rather than yfinance
 
 ```
 
@@ -35,15 +33,6 @@ python main.py
 python scripts/test_hloa_benchmark
 ```
 
-
-## Dependencies
-
-- numpy >= 1.26.0
-- pandas >= 0.19
-- matplotlib >= 3.0
-- pandas-datareader >= 0.10.0
-- PyPortfolioOpt >= 1.5.0
-- scipy >= 1.3
 
 ## License
 
