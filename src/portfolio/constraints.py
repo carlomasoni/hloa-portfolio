@@ -42,7 +42,7 @@ def sharpe_ratio(weights: np.ndarray, mu: pd.Series, cov: pd.DataFrame, rf: floa
 
 
 
-'''
+
 def apply_bounds(
     X_next: np.ndarray, bounds: Union[Tuple[np.ndarray, np.ndarray], str, None] = None) -> np.ndarray:
     if bounds is None:
@@ -71,8 +71,8 @@ def apply_bounds(
             row_sums = X_next.sum(axis=1, keepdims=True)
             X_next = np.where(row_sums != 0, X_next / row_sums, 1.0 / X_next.shape[1])
 
-    return X_nex
-'''
+    return X_next
+
 
 
 

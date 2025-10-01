@@ -11,10 +11,12 @@ from pypfopt import expected_returns, risk_models
 from hloa.core import HLOA, HLOA_Config
 from portfolio.constraints import project_capped_simplex, sharpe_ratio
 
+print("Imports successful")
 
-LOOKBACK_DAYS = 2000         # roughly ~8 years if monthly
-INTERVAL = "1mo"             # "1d" | "1wk" | "1mo"
-CAP = 0.05                   # 5% per name
+
+LOOKBACK_DAYS = 2000         
+INTERVAL = "1mo"            
+CAP = 0.05                   
 SEED = 42
 TICKERS = [
     'ASML.AS','SAP.DE','SIE.DE','ALV.DE','BMW.DE','VOW3.DE','NESN.SW','ROG.SW',
@@ -23,27 +25,43 @@ TICKERS = [
 
 
 
+
+
+def _stooq_candidates(ticker: str):
+    yield ticker
+    for ysuf, ssuf in _SUFFIX_MAP.items():
+        if ticker.endswith(ysuf):
+            base = ticker[: -len(ysuf)]
+            yield (base + ssuf).lower()
+            break
+    yield ticker.split(".")[0]
+    yield ticker.split(".")[0].lower()
+
+
 def fetch_one(ticker: str, start_date: str, end_date: str) -> pd.Series:
-    try:
-        df = pdr.DataReader(ticker, "stooq", start=start_date, end=end_date)
-        if df is None or df.empty:
-            return pd.Series(dtype=float, name=ticker)
-        s = df["Close"].copy()
-        s.name = ticker
-        return s.sort_index()
-    except Exception:
-        return pd.Series(dtype=float, name=ticker)
+    for sym in _stooq_candidates(ticker):
+        try:
+            df = pdr.DataReader(sym, "stooq", start=start_date, end=end_date)
+            if df is not None and not df.empty:
+                s = df["Close"].copy(); s.name = ticker  
+                return s.sort_index()
+        except Exception:
+            continue
+    return pd.Series(dtype=float, name=ticker)
 
 def download_prices(tickers, start_date, end_date) -> pd.DataFrame:
-    series = []
+    out = []
     for t in tickers:
         s = fetch_one(t, start_date, end_date)
         if s.size > 0:
-            series.append(s)
-    if not series:
-        raise ValueError(f"NO DATA PULLED FROM STOOQ FOR ANY TICKER. -> CHECK [ fetch_one_stooq ] FUNCTION.")
-    prices = pd.concat(series, axis=1).sort_index()
+            out.append(s)
+    if not out:
+        raise ValueError("Stooq returned no data for all tickers (check symbols).")
+    prices = pd.concat(out, axis=1).sort_index()
     prices = prices.dropna(axis=1, how="all").dropna(axis=0, how="all")
+    if prices.shape[1] == 0:
+        raise ValueError("All fetched series are empty after cleaning.")
+    print("Prices downloaded successfully")
     return prices
 
 
@@ -51,36 +69,28 @@ def download_prices(tickers, start_date, end_date) -> pd.DataFrame:
     
 def resample_prices(prices: pd.DataFrame, interval: str) -> tuple[pd.DataFrame, int]:
     interval = interval.lower()
-    if interval not in {"1d", "1wk", "1mo"}:
-        raise ValueError('WRONG INTERVAL - MUST BE ONE OF {"1d","1wk","1mo"}')
-
+    if interval not in {"1d","1wk","1mo"}:
+        raise ValueError('interval must be "1d", "1wk", or "1mo"')
     if interval == "1d":
-        resampled = prices.asfreq("B").ffill()
-        ann = 252
+        res = prices.asfreq("B").ffill(); ann = 252
     elif interval == "1wk":
-        resampled = prices.resample("W-FRI").last().ffill()
-        ann = 52
-    else:
-        resampled = prices.resample("M").last().ffill()
-        ann = 12
-
+        res = prices.resample("W-FRI").last().ffill(); ann = 52
+    else: 
+        res = prices.resample("ME").last().ffill(); ann = 12
     min_obs = max(12, int(0.8 * ann * 2))
-    prices = prices.dropna(axis=1, how="all").drop(
-        columns=prices.columns[prices.count() < min_obs],
-        inplace=True
-    )
+    keep = res.columns[res.notna().sum() >= min_obs]
+    res = res[keep]
+    if res.shape[1] == 0:
+        raise ValueError("No assets remain after resampling/cleaning.")
+    print("Prices resampled successfully")
+    return res, ann
 
-    return prices, ann
 
-
-def get_prices_stooq(tickers, lookback_days=LOOKBACK_DAYS, interval=INTERVAL) -> tuple[pd.DataFrame, int]:
-    end_time = datetime.now()
-    start_time = end_time - timedelta(days=lookback_days)
-    end_date = end_time.strftime("%Y-%m-%d")
-    start_date = start_time.strftime("%Y-%m-%d")
-
-    daily = download_prices(tickers, start_date, end_date)
-    return resample_prices(daily, interval=interval)
+def get_prices(tickers, lookback_days=LOOKBACK_DAYS, interval=INTERVAL):
+    end = datetime.now(); start = end - timedelta(days=lookback_days)
+    prices_daily = download_prices(tickers, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
+    print("Prices downloaded successfully - ready for HLOA")
+    return resample_prices(prices_daily, interval=interval)
 
 
 
@@ -92,7 +102,7 @@ def optimize_portfolio_with_HLOA(
     cap=CAP,
     seed=SEED,
 ):
-    prices, ann = get_prices_stooq(tickers, lookback_days=lookback_days, interval=interval)
+    prices, ann = get_prices(tickers, lookback_days=lookback_days, interval=interval)
 
     N = prices.shape[1]
     if N * cap < 1.0:
@@ -128,4 +138,3 @@ def main():
 if __name__ == "__main__":
     raise SystemExit(main())
 
-    
