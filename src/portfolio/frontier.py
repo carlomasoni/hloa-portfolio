@@ -4,32 +4,15 @@ from datetime import datetime, timedelta
 import yfinance as yf
 from pypfopt import expected_returns, risk_models
 
+
 def sharpe_ratio(weights: np.ndarray, mu: pd.Series, cov: pd.DataFrame, rf: float = 0.0) -> float:
     w = np.asarray(weights, dtype=float)
-    ex = float(np.dot(w, (mu - rf)))
-    vol = float(np.sqrt(np.dot(w, cov.values @ w)))
+    ex = float(w @ (mu - rf))
+    vol = float(np.sqrt(w @ cov.values @ w))
     if vol <= 0 or not np.isfinite(vol):
         return float("-inf")
     return ex / vol
 
-def get_risk_free_rate(currency='EUR', source='yfinance'):
-    rf_default = 0.02
-    if source != 'yfinance' or yf is None:
-        return rf_default
-    try:
-        if currency.upper() == 'EUR':
-            ticker = "DE10Y-DE"
-
-        data = yf.download(ticker, period="1mo", interval="1d", progress=False)
-        if data.empty:
-            return rf_default
-        last = float(data['Close'].iloc[-1])
-        rf = last / 100.0
-        if not np.isfinite(rf) or rf < -0.05 or rf > 0.15:
-            return rf_default
-        return rf
-    except Exception:
-        return rf_default
 
 def _download_prices(tickers, start_date, end_date, interval="1mo"):
     if not tickers:
@@ -48,93 +31,119 @@ def _download_prices(tickers, start_date, end_date, interval="1mo"):
         raise ValueError("Download returned empty frame.")
 
     if isinstance(df.columns, pd.MultiIndex):
-        close = df.xs('Adj Close', axis=1, level=1)
+        close = df.xs("Adj Close", axis=1, level=1)
         close = close.sort_index(axis=1)
     else:
-        close = pd.DataFrame(df['Adj Close'])
+        close = pd.DataFrame(df["Adj Close"])
         close.columns = [tickers[0]]
 
-    close = close.dropna(how='all', axis=1).dropna(how='all', axis=0)
+    close = close.dropna(how="all", axis=1).dropna(how="all", axis=0)
     return close
 
-def get_portfolio_data(time_period_days=30, include_eurostoxx=True):
-    benchmarks = ['^FCHI', '^GDAXI', '^FTSE', 'FEZ']
-    eurostoxx50_stocks = [
-        'ASML.AS', 'SAP.DE', 'SIE.DE', 'ALV.DE', 'BMW.DE', 'VOW3.DE', 'NESN.SW', 'ROG.SW',
-        'OR.PA', 'SAN.PA', 'MC.PA', 'BNP.PA', 'ENEL.MI', 'ENI.MI', 'SAN.MC', 'BBVA.MC'
-    ]
 
-    investable = eurostoxx50_stocks if include_eurostoxx else []
+EUROSTOXX50 = [
+    'ASML.AS','SAP.DE','SIE.DE','ALV.DE','BMW.DE','VOW3.DE','NESN.SW','ROG.SW',
+    'OR.PA','SAN.PA','MC.PA','BNP.PA','ENEL.MI','ENI.MI','SAN.MC','BBVA.MC'
+]
+
+'''
+CHANGE INTERVAL TO 1D, 1WK, 1MO WHATEVER YOU WANT. 
+'''
+def get_portfolio_data(
+    lookback_days: int = 2000,
+    interval: str = "1mo",           
+    min_years: float = 2.0,         
+    tickers: list[str] = None
+):
+    if tickers is None:
+        tickers = EUROSTOXX50
 
     end_time = datetime.now()
-    start_time = end_time - timedelta(days=time_period_days)
+    start_time = end_time - timedelta(days=lookback_days)
     end_date = end_time.strftime("%Y-%m-%d")
     start_date = start_time.strftime("%Y-%m-%d")
 
-    prices_investable = _download_prices(investable, start_date, end_date, interval="1mo")
-    min_obs = 24 
-    sufficient = prices_investable.columns[prices_investable.notna().sum() >= min_obs]
-    prices_investable = prices_investable[sufficient]
-
-    prices_bench = pd.DataFrame()
-    try:
-        prices_bench = _download_prices(benchmarks, start_date, end_date, interval="1mo")
-    except Exception:
-        pass
+    prices = _download_prices(tickers, start_date, end_date, interval=interval)
 
 
-    return prices_investable, prices_bench
+    interval_to_ann = {"1d": 252, "1wk": 52, "1mo": 12}
+    ann = interval_to_ann.get(interval, 12)
 
-def optimize_portfolio_sharpe(time_period_days=30, include_eurostoxx=True, risk_free_rate=None, currency='EUR'):
+
+    min_obs = int(min_years * ann * 0.8)  
+    keep = prices.columns[prices.notna().sum() >= max(min_obs, 12)]
+    prices = prices[keep]
+
+    if prices.shape[1] == 0:
+        raise ValueError("NO DATA PRESENT - CHECK YAHOO FINANCE (ELSE USE FRED?) :(")
+
+    return prices, ann
+
+def optimize_portfolio_sharpe(
+    lookback_days: int = 2000,
+    interval: str = "1mo",
+    ann_override: int | None = None,
+    cap: float = 0.05
+):
     from hloa.core import HLOA, HLOA_Config
     from portfolio.constraints import project_capped_simplex
 
+    prices, ann = get_portfolio_data(lookback_days=lookback_days, interval=interval)
+    if ann_override is not None:
+        ann = ann_override  
 
-    prices, _bench = get_portfolio_data(time_period_days, include_eurostoxx)
-
-    if prices.shape[1] == 0:
-        raise ValueError("ERROR - NO DATA PRESENT - CHECK YAHOO FINANCE (ELSE USE FRED?)")
-
-    cap = 0.05
     N = prices.shape[1]
     if N * cap < 1.0:
         cap = 1.0 / N - 1e-12
 
-    mu = expected_returns.mean_historical_return(prices, frequency=12)     
-    Sigma = risk_models.CovarianceShrinkage(prices, frequency=12).ledoit_wolf()
-
-
-    rf = risk_free_rate if risk_free_rate is not None else get_risk_free_rate(currency=currency, source='yfinance')
-
+   
+    mu = expected_returns.mean_historical_return(prices, frequency=ann)           
+    Sigma = risk_models.CovarianceShrinkage(prices, frequency=ann).ledoit_wolf()  
 
     def portfolio_fitness(weights_batch):
         scores = np.empty(weights_batch.shape[0], dtype=float)
         for i, w in enumerate(weights_batch):
             w_proj = project_capped_simplex(w, total=1.0, cap=cap)
-            scores[i] = sharpe_ratio(w_proj, mu, Sigma, rf=rf)
-        return scores
-
+            scores[i] = sharpe_ratio(w_proj, mu, Sigma, rf=0.0)  
 
     lb = np.zeros(N)
     ub = np.ones(N)
-    config = HLOA_Config(pop_size=200, iters=1000, seed=42, project_on_init=True) 
+    config = HLOA_Config(pop_size=200, iters=1000, seed=42)
 
     opt = HLOA(obj=portfolio_fitness, bounds=(lb, ub), config=config)
     w_best, f_best, _, _ = opt.run()
 
     w_opt = project_capped_simplex(w_best, total=1.0, cap=cap)
-    port_ret = float(np.dot(w_opt, mu.values))
+    port_ret = float(w_opt @ mu.values)
     port_vol = float(np.sqrt(w_opt @ Sigma.values @ w_opt))
-    sr = sharpe_ratio(w_opt, mu, Sigma, rf=rf)
+    sr = sharpe_ratio(w_opt, mu, Sigma, rf=0.0)
 
     return {
-        'optimal_weights': dict(zip(mu.index.tolist(), w_opt)),
-        'sharpe_ratio': sr,
-        'expected_return': port_ret,
-        'volatility': port_vol,
-        'risk_free_rate': rf,
-        'n_assets': N,
-        'cap_used': cap,
-        'asset_names': mu.index.tolist(),
-        'optimization_fitness': f_best,
+        "interval": interval,
+        "annualisation_used": ann,
+        "cap_used": cap,
+        "n_assets": N,
+        "optimal_weights": dict(zip(mu.index.tolist(), w_opt)),
+        "expected_return": port_ret,
+        "volatility": port_vol,
+        "sharpe_ratio": sr,
+        "optimization_fitness": f_best,
     }
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    res = optimize_portfolio_sharpe(
+        lookback_days=2000,
+        interval="1mo",  
+        cap=0.05
+    )
+    print(res["sharpe_ratio"], res["cap_used"], res["interval"], res["annualisation_used"])
+
+

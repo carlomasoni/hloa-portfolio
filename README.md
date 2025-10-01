@@ -6,26 +6,13 @@ Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for
 
 ## ---------- To - Do: ----------
 ```
--> Remove the RFRR from the sharpe calculation
--> compare to market weights
--> ensure HLOA is finding optimal solutions on n10 problems 
--> rework data collection to work offline for testing 
+-> Remove the RFRR from the sharpe calculation [DONE]
+-> compare to market weights []
+-> ensure HLOA is finding optimal solutions on n10 problems [SORT OF DONE]
+-> rework data collection to work offline for testing []
+-> use fred rather than yfinance
 
 ```
-
-
-
-
-
-
-
-## Features
-
-- **HLOA Optimization**: Continuous weight optimization using evolutionary algorithms
-- **EuroStoxx 50 Support**: Optimized for European markets
-- **Risk-Free Rate Calculation**: Automatic market data integration
-- **Sharpe Ratio Maximization**: Risk-adjusted return optimization
-- **5% Weight Cap**: Individual asset weight constraint
 
 
 ## Installation
@@ -67,9 +54,3 @@ python scripts/benchmark_optimization.py
 MIT License
 
 
-
-├── docs/                  # Documentation
-│   └── BENCHMARK_TESTING.md
-├── requirements.txt       # Dependencies
-├── .gitignore            # Git ignore rules
-└── README.md             # Updated project documentation
