@@ -21,7 +21,7 @@ Portfolio optimization using the Horned Lizard Optimization Algorithm (HLOA) for
 # Install dependencies
 pip install -r requirements.txt
 
-# Or install system-wide on Arch Linux
+# Or install system-wide on Linux
 python3 -m pip install --user --break-system-packages -r requirements.txt
 ```
 
@@ -32,7 +32,7 @@ python3 -m pip install --user --break-system-packages -r requirements.txt
 python main.py
 
 # Run HLOA benchmark
-python scripts/benchmark_optimization.py
+python scripts/test_hloa_benchmark
 ```
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Tuple, Union
 
 import numpy as np
+import pandas as pd
 
 def project_capped_simplex(w, cap=0.05, total=1.0, tol=1e-12, max_iter=100):
 

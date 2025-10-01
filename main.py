@@ -1,133 +1,138 @@
-import sys
-import os
+# main.py
+import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-from pandas_datareader import data as pdr
-from pypfopt import expected_returns, risk_models
+import yfinance as yf
 
 from hloa.core import HLOA, HLOA_Config
-from portfolio.constraints import project_capped_simplex, sharpe_ratio
-from portfolio.sx50 import fetch_latest_sx5e_constituents
 
-
-print("Imports successful")
-
-
-
-
-
-
-LOOKBACK_DAYS = 2000         
-INTERVAL = "1mo"            
-CAP = 0.05                   
+LOOKBACK_DAYS = 2000
+INTERVAL = "1mo"         
+CAP = 0.05               
 SEED = 42
-TICKERS = fetch_latest_sx5e_constituents()
 
-SUFFIX_MAP = {
-    ".AS": ".nl",  
-    ".DE": ".de",  
-    ".PA": ".fr",  
-    ".SW": ".ch",  
-    ".MI": ".it",  
-    ".MC": ".es",  
-    ".L":  ".uk",  
-}
+TICKERS = [
+    # France (12)
+    "OR.PA","MC.PA","RMS.PA","AI.PA","SU.PA","SAF.PA","DG.PA","BN.PA","EL.PA","AIR.PA","KER.PA","ORA.PA",
+    # Germany (14)
+    "SAP.DE","SIE.DE","ALV.DE","DTE.DE","BAYN.DE","BMW.DE","VOW3.DE","IFX.DE","DB1.DE","RWE.DE",
+    "MUV2.DE","BAS.DE","DHL.DE","EOAN.DE",
+    # Netherlands (6)
+    "ASML.AS","AD.AS","PHIA.AS","HEIA.AS","PRX.AS","INGA.AS",
+    # Spain (5)
+    "SAN.MC","BBVA.MC","ITX.MC","IBE.MC","TEF.MC",
+    # Italy (7)
+    "ENEL.MI","ENI.MI","ISP.MI","UCG.MI","STM.MI","PRY.MI","MONC.MI",
+    # Belgium (3)
+    "ABI.BR","KBC.BR","SOLB.BR",
+    # Finland (2)
+    "NOKIA.HE","SAMPO.HE",
+    # Austria (1)
+    "OMV.VI",
+    # Portugal (1)
+    "EDP.LS",
+]
+
+def project_capped_simplex(w, cap=0.05, total=1.0, tol=1e-12, max_iter=100):
+    w = np.asarray(w, float)
+    N = w.size
+    if N * cap + 1e-15 < total:
+        cap = 1.0 / N + 1e-12
+    lo = np.min(w) - cap
+    hi = np.max(w)
+    for _ in range(max_iter):
+        mid = 0.5 * (lo + hi)
+        x = np.minimum(cap, np.maximum(0.0, w - mid))
+        s = x.sum()
+        if abs(s - total) <= tol:
+            break
+        if s > total:
+            lo = mid
+        else:
+            hi = mid
+    x_sum = x.sum()
+    if x_sum > 0:
+        x *= total / x_sum
+    np.clip(x, 0.0, cap, out=x)
+    x *= total / max(x.sum(), 1e-16)
+    return x
+
+def sharpe_ratio(w, mu, cov, rf=0.0):
+    w = np.asarray(w, float)
+    ex = float(w @ (mu - rf))
+    vol = float(np.sqrt(w @ cov.values @ w))
+    if vol <= 0 or not np.isfinite(vol):
+        return float("-inf")
+    return ex / vol
 
 def ensure_feasible_cap(N: int, cap: float) -> float:
-    """Return a cap that satisfies N * cap >= 1 (tiny epsilon for safety)."""
-    min_cap = 1.0 / N
-    if N * cap < 1.0:
-        print(f"[info] Requested cap {cap:.4%} infeasible with N={N}. "
-              f"Relaxing to {min_cap:.4%}.")
-        return min_cap + 1e-12
-    return cap
+    return (1.0 / N + 1e-12) if N * cap < 1.0 else cap
 
-
-def _stooq_candidates(ticker: str):
-    yield ticker
-    for ysuf, ssuf in SUFFIX_MAP.items():
-        if ticker.endswith(ysuf):
-            base = ticker[: -len(ysuf)]
-            yield (base + ssuf).lower()
-            break
-    yield ticker.split(".")[0]
-    yield ticker.split(".")[0].lower()
-
-
-def fetch_one(ticker: str, start_date: str, end_date: str) -> pd.Series:
-    for sym in _stooq_candidates(ticker):
-        try:
-            df = pdr.DataReader(sym, "stooq", start=start_date, end=end_date)
-            if df is not None and not df.empty:
-                s = df["Close"].copy(); s.name = ticker  
-                return s.sort_index()
-        except Exception:
-            continue
-    return pd.Series(dtype=float, name=ticker)
-
-def download_prices(tickers, start_date, end_date) -> pd.DataFrame:
-    out = []
-    for t in tickers:
-        s = fetch_one(t, start_date, end_date)
-        if s.size > 0:
-            out.append(s)
-    if not out:
-        raise ValueError("Stooq returned no data for all tickers (check symbols).")
-    prices = pd.concat(out, axis=1).sort_index()
-    prices = prices.dropna(axis=1, how="all").dropna(axis=0, how="all")
-    if prices.shape[1] == 0:
-        raise ValueError("All fetched series are empty after cleaning.")
-    print(f"Fetched {len(out)} series. Columns kept: {list(prices.columns)}")
-    return prices
-
-
-
-    
-def resample_prices(prices: pd.DataFrame, interval: str) -> tuple[pd.DataFrame, int]:
+def get_prices_yf(tickers, lookback_days=LOOKBACK_DAYS, interval=INTERVAL):
     interval = interval.lower()
-    if interval not in {"1d","1wk","1mo"}:
-        raise ValueError('interval must be "1d", "1wk", or "1mo"')
-    if interval == "1d":
-        res = prices.asfreq("B").ffill(); ann = 252
-    elif interval == "1wk":
-        res = prices.resample("W-FRI").last().ffill(); ann = 52
-    else: 
-        res = prices.resample("ME").last().ffill(); ann = 12
-    min_obs = max(12, int(0.8 * ann * 2))
-    keep = res.columns[res.notna().sum() >= min_obs]
-    res = res[keep]
-    if res.shape[1] == 0:
-        raise ValueError("No assets remain after resampling/cleaning.")
-    print(f"Resampled to {interval}. {len(res)} columns kept.")
-    return res, ann
+    ann = {"1d": 252, "1wk": 52, "1mo": 12}.get(interval, 12)
 
+    end = datetime.now()
+    start = end - timedelta(days=lookback_days)
+    start_str, end_str = start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")
 
-def get_prices(tickers, lookback_days=LOOKBACK_DAYS, interval=INTERVAL):
-    end = datetime.now(); start = end - timedelta(days=lookback_days)
-    prices_daily = download_prices(tickers, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
-    print("Prices downloaded successfully - ready for HLOA")
-    return resample_prices(prices_daily, interval=interval)
+    closes = []
+    chunk = 50
+    for i in range(0, len(tickers), chunk):
+        batch = tickers[i:i+chunk]
+        df = yf.download(
+            batch, start=start_str, end=end_str, interval=interval,
+            auto_adjust=True, actions=False, progress=False, group_by="ticker", threads=True,
+        )
+        if df.empty:
+            continue
+        if isinstance(df.columns, pd.MultiIndex):
+            for sym in batch:
+                if (sym, "Adj Close") in df.columns:
+                    closes.append(df[sym]["Adj Close"].rename(sym))
+                elif (sym, "Close") in df.columns:
+                    closes.append(df[sym]["Close"].rename(sym))
+        else:
+            col = "Adj Close" if "Adj Close" in df.columns else "Close"
+            closes.append(df[col].rename(batch[0]))
 
+    if not closes:
+        raise ValueError("No Yahoo prices downloaded for any symbol.")
 
+    prices = pd.concat(closes, axis=1).sort_index()
+    prices = prices.dropna(axis=1, how="all").dropna(axis=0, how="all")
 
+    min_obs = max(8, int(1.0 * ann))
+    keep = prices.columns[prices.notna().sum() >= min_obs]
+    prices = prices[keep]
+
+    if prices.shape[1] == 0:
+        raise ValueError("No assets remain after cleaning; try interval='1wk' or shorter lookback.")
+    return prices  
 
 def optimize_portfolio_with_HLOA(
-    tickers=TICKERS,
     lookback_days=LOOKBACK_DAYS,
     interval=INTERVAL,
     cap=CAP,
     seed=SEED,
 ):
-    prices, ann = get_prices(tickers, lookback_days=lookback_days, interval=interval)
+    prices = get_prices_yf(TICKERS, lookback_days=lookback_days, interval=interval)
+
+  
+    monthly_returns_matrix = prices.pct_change().dropna(how="any")
+    monthly_return = monthly_returns_matrix.mean(axis=0)                 
+    monthly_standard_deviation = monthly_returns_matrix.std(axis=0)     
+    cov_monthly = monthly_returns_matrix.cov()                           
+
+    mu = monthly_return
+    Sigma = cov_monthly
+
 
     N = prices.shape[1]
     cap = ensure_feasible_cap(N, cap)
-
-    mu = expected_returns.mean_historical_return(prices, frequency=ann)
-    Sigma = risk_models.CovarianceShrinkage(prices, frequency=ann).ledoit_wolf()
 
     def fitness(batch):
         scores = np.empty(batch.shape[0], dtype=float)
@@ -136,18 +141,17 @@ def optimize_portfolio_with_HLOA(
             scores[i] = sharpe_ratio(wp, mu, Sigma, rf=0.0)
         return scores
 
-    lb = np.zeros(N)
-    ub = np.ones(N)
+    lb = np.zeros(N); ub = np.ones(N)
     cfg = HLOA_Config(pop_size=200, iters=1000, seed=seed)
     opt = HLOA(obj=fitness, bounds=(lb, ub), config=cfg)
-
     w_best, _, _, _ = opt.run()
+
     w_opt = project_capped_simplex(w_best, total=1.0, cap=cap)
     w_opt = np.maximum(w_opt, 0.0)
-    w_opt = w_opt / w_opt.sum()
+    w_opt = w_opt / w_opt.sum()  # exact sum = 1
+
 
     return dict(sorted(zip(mu.index.tolist(), w_opt), key=lambda kv: kv[1], reverse=True))
-
 
 def main():
     weights = optimize_portfolio_with_HLOA()
@@ -157,4 +161,3 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
