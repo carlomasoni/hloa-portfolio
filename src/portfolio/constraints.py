@@ -4,44 +4,47 @@ from typing import Tuple, Union
 
 import numpy as np
 
+def project_capped_simplex(w, cap=0.05, total=1.0, tol=1e-12, max_iter=100):
 
-def project_capped_simplex(
-    w: np.ndarray, total: float = 1.0, cap: float = 0.05
-) -> np.ndarray:
-    w = np.asarray(w, dtype=float)
-    w = np.clip(w, 0.0, cap)
-
-    if np.isclose(w.sum(), total):
-        return w
-
-    current_sum = w.sum()
-
-    if current_sum > 0:
-        scale_factor = total / current_sum
-        x = w * scale_factor
-
-        if x.max() > cap:
-            x = np.clip(x, 0.0, cap)
-            new_sum = x.sum()
-            if new_sum > 0:
-                x *= total / new_sum
-                x = np.clip(x, 0.0, cap)
-        return x
-    else:
-        n = w.size
-        equal_weight = min(total / n, cap)
-        x = np.full(n, equal_weight)
-        remaining = total - x.sum()
-        if remaining > 0:
-            x[0] += remaining
-            x = np.clip(x, 0.0, cap)
-        return x
-
+    w = np.asarray(w, float)
+    N = w.size
+    if N * cap + 1e-15 < total:
+        raise ValueError(f"Infeasible cap: need cap >= {1.0/N:.6f}")
+    lo = np.min(w) - cap
+    hi = np.max(w)
+    for _ in range(max_iter):
+        mid = 0.5 * (lo + hi)
+        x = np.minimum(cap, np.maximum(0.0, w - mid))
+        s = x.sum()
+        if abs(s - total) <= tol:
+            break
+        if s > total:
+            lo = mid
+        else:
+            hi = mid
+    x_sum = x.sum()
+    if x_sum > 0:
+        x *= total / x_sum
+    np.clip(x, 0.0, cap, out=x)
+    x *= total / max(x.sum(), 1e-16)
+    return x
+def sharpe_ratio(weights: np.ndarray, mu: pd.Series, cov: pd.DataFrame, rf: float = 0.0) -> float:
+    w = np.asarray(weights, dtype=float)
+    ex = float(w @ (mu - rf))
+    vol = float(np.sqrt(w @ cov.values @ w))
+    if vol <= 0 or not np.isfinite(vol):
+        return float("-inf")
+    return ex / vol
 
 
+
+
+
+
+
+'''
 def apply_bounds(
-    X_next: np.ndarray, bounds: Union[Tuple[np.ndarray, np.ndarray], str, None] = None
-) -> np.ndarray:
+    X_next: np.ndarray, bounds: Union[Tuple[np.ndarray, np.ndarray], str, None] = None) -> np.ndarray:
     if bounds is None:
         return X_next
 
@@ -68,5 +71,9 @@ def apply_bounds(
             row_sums = X_next.sum(axis=1, keepdims=True)
             X_next = np.where(row_sums != 0, X_next / row_sums, 1.0 / X_next.shape[1])
 
-    return X_next
+    return X_nex
+'''
+
+
+
 
