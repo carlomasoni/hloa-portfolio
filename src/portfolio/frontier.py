@@ -23,7 +23,6 @@ assets = [
     'FEZ'  
 ]
 
-# Full EuroStoxx 50 list
 eurostoxx50_stocks_full = [
     'ASML.AS', 'UNA.AS', 'AD.AS', 'KPN.AS', 'INGA.AS', 'PHIA.AS', 'SAP.DE', 'SIE.DE', 'ALV.DE', 'DTE.DE', 'BAYN.DE', 'BMW.DE', 'VOW3.DE','NOVN.SW', 'ROG.SW', 'NESN.SW', 'UHR.SW', 'CSGN.SW', 'GIVN.SW','OR.PA', 'SAN.PA', 'MC.PA', 'AI.PA', 'GLE.PA', 'BNP.PA', 'TTE.PA', 'EL.PA', 'VIE.PA','ABI.BR', 'SOLB.BR','ENEL.MI', 'ISP.MI', 'ENI.MI', 'UCG.MI', 'G.MI','SAN.MC', 'BBVA.MC', 'ITX.MC', 'IBE.MC', 'REP.MC','NOKIA.HE', 'SAMPO.HE','NOVO-B.CO', 'DSV.CO','CRH.L', 'GLEN.L'
 ]
