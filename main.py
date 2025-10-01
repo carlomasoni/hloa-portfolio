@@ -19,12 +19,40 @@ INTERVAL = "1mo"
 CAP = 0.05                   
 SEED = 42
 TICKERS = [
-    'ASML.AS','SAP.DE','SIE.DE','ALV.DE','BMW.DE','VOW3.DE','NESN.SW','ROG.SW',
-    'OR.PA','SAN.PA','MC.PA','BNP.PA','ENEL.MI','ENI.MI','SAN.MC','BBVA.MC'
+    "ASML.AS","ADYEN.AS","PHIA.AS","INGA.AS","HEIA.AS","PRX.AS",
+    "SAP.DE","SIE.DE","ALV.DE","DTE.DE","BAYN.DE","BMW.DE","VOW3.DE","IFX.DE","MUV2.DE",
+    "AIR.PA","OR.PA","MC.PA","RMS.PA","AI.PA","SU.PA","SAF.PA","BN.PA","CAP.PA","ACA.PA","DG.PA","ORP.PA",
+    "SAN.MC","BBVA.MC","ITX.MC","IBE.MC","TEF.MC","AMS.MC",
+    "ENEL.MI","ENI.MI","ISP.MI","UCG.MI","STM.MI","PRY.MI","ATL.MI",
+    "NOKIA.HE","SAMPO.HE","KNEBV.HE",
+    "ABI.BR","SOLB.BR","KBC.BR",
+    "CRH.L",             
+    "OMV.VI","VER.VI",     
+    "EDP.LS","GALP.LS",
+    "MT.AS",               
+    "FER.MC",              
+    "KER.PA","EL.PA","TTE.PA","VIV.PA","ORA.PA","SGO.PA",
 ]
 
 
+_SUFFIX_MAP = {
+    ".AS": ".nl",  
+    ".DE": ".de",  
+    ".PA": ".fr",  
+    ".SW": ".ch",  
+    ".MI": ".it",  
+    ".MC": ".es",  
+    ".L":  ".uk",  
+}
 
+def ensure_feasible_cap(N: int, cap: float) -> float:
+    """Return a cap that satisfies N * cap >= 1 (tiny epsilon for safety)."""
+    min_cap = 1.0 / N
+    if N * cap < 1.0:
+        print(f"[info] Requested cap {cap:.4%} infeasible with N={N}. "
+              f"Relaxing to {min_cap:.4%}.")
+        return min_cap + 1e-12
+    return cap
 
 
 def _stooq_candidates(ticker: str):
@@ -61,7 +89,7 @@ def download_prices(tickers, start_date, end_date) -> pd.DataFrame:
     prices = prices.dropna(axis=1, how="all").dropna(axis=0, how="all")
     if prices.shape[1] == 0:
         raise ValueError("All fetched series are empty after cleaning.")
-    print("Prices downloaded successfully")
+    print(f"Fetched {len(out)} series. Columns kept: {list(prices.columns)}")
     return prices
 
 
@@ -82,7 +110,7 @@ def resample_prices(prices: pd.DataFrame, interval: str) -> tuple[pd.DataFrame, 
     res = res[keep]
     if res.shape[1] == 0:
         raise ValueError("No assets remain after resampling/cleaning.")
-    print("Prices resampled successfully")
+    print(f"Resampled to {interval}. {len(res)} columns kept.")
     return res, ann
 
 
@@ -105,8 +133,7 @@ def optimize_portfolio_with_HLOA(
     prices, ann = get_prices(tickers, lookback_days=lookback_days, interval=interval)
 
     N = prices.shape[1]
-    if N * cap < 1.0:
-        cap = 1.0 / N - 1e-12  
+    cap = ensure_feasible_cap(N, cap)
 
     mu = expected_returns.mean_historical_return(prices, frequency=ann)
     Sigma = risk_models.CovarianceShrinkage(prices, frequency=ann).ledoit_wolf()
@@ -125,6 +152,8 @@ def optimize_portfolio_with_HLOA(
 
     w_best, _, _, _ = opt.run()
     w_opt = project_capped_simplex(w_best, total=1.0, cap=cap)
+    w_opt = np.maximum(w_opt, 0.0)
+    w_opt = w_opt / w_opt.sum()
 
     return dict(sorted(zip(mu.index.tolist(), w_opt), key=lambda kv: kv[1], reverse=True))
 
